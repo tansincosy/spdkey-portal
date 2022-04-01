@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-
+import { mock } from 'mockjs';
 const waitTime = (time: number = 100) => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -29,18 +29,14 @@ const getAccess = () => {
 // 代码中会兼容本地 service mock 以及部署站点的静态数据
 export default {
   // 支持值为 Object 和 Array
-  'GET /api/currentUser': (req: Request, res: Response) => {
-    if (!getAccess()) {
-      res.status(401).send({
-        data: {
-          isLogin: false,
-        },
-        errorCode: '401',
-        errorMessage: '请先登录！',
-        success: true,
-      });
-      return;
-    }
+  'GET /api/user/current-user': (req: Request, res: Response) => {
+    // if (!getAccess()) {
+    //   res.status(400).send({
+    //     errorCode: 'INKA:101012',
+    //     errorMessage: 'Invalid user: username or password is incorrect, please re-enter',
+    //   });
+    //   return;
+    // }
     res.send({
       success: true,
       data: {
@@ -51,32 +47,6 @@ export default {
         signature: '海纳百川，有容乃大',
         title: '交互专家',
         group: '蚂蚁金服－某某某事业群－某某平台部－某某技术部－UED',
-        tags: [
-          {
-            key: '0',
-            label: '很有想法的',
-          },
-          {
-            key: '1',
-            label: '专注设计',
-          },
-          {
-            key: '2',
-            label: '辣~',
-          },
-          {
-            key: '3',
-            label: '大长腿',
-          },
-          {
-            key: '4',
-            label: '川妹子',
-          },
-          {
-            key: '5',
-            label: '海纳百川',
-          },
-        ],
         notifyCount: 12,
         unreadCount: 11,
         country: 'China',
@@ -200,4 +170,225 @@ export default {
   },
 
   'GET  /api/login/captcha': getFakeCaptcha,
+
+  'POST /api/user': async (req: Request, res: Response) => {
+    return res.json(
+      mock({
+        id: '@guid',
+      }),
+    );
+  },
+
+  'PUT /api/user': async (req: Request, res: Response) => {
+    return res.json(
+      mock({
+        id: '@guid',
+      }),
+    );
+  },
+
+  'DELETE /api/user': async (req: Request, res: Response) => {
+    return res.json({});
+  },
+
+  'POST /api/device': async (req: Request, res: Response) => {
+    return res.json(
+      mock({
+        id: '@guid',
+        clientId: '@guid',
+        clientSecret: '@guid',
+      }),
+    );
+  },
+
+  'POST /api/oauth/token': async (req: Request, res: Response) => {
+    return res.json(
+      mock({
+        accessToken: '@guid()',
+        refreshToken: '@guid()',
+        expiredIn: '@integer(60, 3600)',
+        type: 'Bearer',
+      }),
+    );
+  },
+
+  'GET /api/oauth/revoke': async (req: Request, res: Response) => {
+    return res.json({});
+  },
+
+  'PUT /api/device': async (req: Request, res: Response) => {
+    return res.json(
+      mock({
+        id: '@guid',
+      }),
+    );
+  },
+
+  'DELETE /api/device': async (req: Request, res: Response) => {
+    return res.json({});
+  },
+
+  'GET /api/device': async (req: Request, res: Response) => {
+    const { current = 1, pageSize = 10, id, userId } = req.query;
+    const mockDatas = mock({
+      'data|1-50': [
+        {
+          id: '@guid',
+          clientId: '@guid',
+          name: '@name',
+          platform: '@name',
+          clientSecret: '@guid',
+          'isLocked|1': [true, false],
+          accessTokenValidateSeconds: '@integer(1, 60)',
+          refreshTokenValidateSeconds: '@integer(1, 60)',
+          'grants|1': ['password', 'redirect_url'],
+          updatedAt: '@datetime(T)',
+          createdAt: '@datetime(T)',
+          'isOnline|1': [true, false],
+        },
+      ],
+      'total|1': [5, 20, 50],
+      success: true,
+      pageSize,
+      current,
+    });
+    if (id) {
+      return res.json(
+        mock({
+          id: '@guid',
+          clientId: '@guid',
+          name: '@name',
+          platform: '@name',
+          clientSecret: '@guid',
+          'isLocked|1': [true, false],
+          accessTokenValidateSeconds: '@integer(1, 60)',
+          refreshTokenValidateSeconds: '@integer(1, 60)',
+          'grants|1': ['password', 'redirect_url'],
+          'configs|1-5': ['global', 'custom1', 'custom2'],
+          updatedAt: '@datetime(T)',
+          createdAt: '@datetime(T)',
+          'isOnline|1': [true, false],
+        }),
+      );
+    }
+
+    const datas = mockDatas.data.map(
+      (item: { updatedAt: string | number; createdAt: string | number }) => ({
+        ...item,
+        updatedAt: +item.updatedAt,
+        createdAt: +item.createdAt,
+      }),
+    );
+    if (userId) {
+      return res.json(datas);
+    }
+    mockDatas.data = datas;
+    return res.json(mockDatas);
+  },
+
+  'DELETE /api/log': async (req: Request, res: Response) => {
+    return res.json({});
+  },
+
+  'POST /api/log': async (req: Request, res: Response) => {
+    return res.json(
+      mock({
+        id: '@guid',
+      }),
+    );
+  },
+
+  'GET /api/log': async (req: Request, res: Response) => {
+    const { current = 1, pageSize = 10, id } = req.query;
+    const mockDatas = mock({
+      'data|1-50': [
+        {
+          id: '@guid',
+          'level|1': ['info', 'error', 'warn', 'debug'],
+          message: '@paragraph()',
+          timestamp: '@datetime(T)',
+          user: '@cname',
+        },
+      ],
+      'total|1': [5, 20, 50],
+      success: true,
+      pageSize,
+      current,
+    });
+    if (id) {
+      return res.json(
+        mock({
+          id: '@guid',
+          clientId: '@guid',
+          name: '@name',
+          platform: '@name',
+          clientSecret: '@guid',
+          'isLocked|1': [true, false],
+          accessTokenValidateSeconds: '@integer(1, 60)',
+          refreshTokenValidateSeconds: '@integer(1, 60)',
+          'grants|1': ['password', 'redirect_url'],
+          updatedAt: '@datetime(T)',
+          createdAt: '@datetime(T)',
+          'isOnline|1': [true, false],
+        }),
+      );
+    }
+
+    const datas = mockDatas.data.map(
+      (item: { updatedAt: string | number; createdAt: string | number }) => ({
+        ...item,
+        updatedAt: +item.updatedAt,
+        createdAt: +item.createdAt,
+      }),
+    );
+    mockDatas.data = datas;
+    return res.json(mockDatas);
+  },
+
+  'GET /api/user': async (req: Request, res: Response) => {
+    const { current = 1, pageSize = 10, id } = req.query;
+    if (id) {
+      return res.json(
+        mock({
+          id: '@guid',
+          username: '@name',
+          'isLocked|+1': [true, false],
+          'clientLimit|1': [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+          'scopes|1-3': ['mobile', 'stb', 'admin', 'web'],
+          updatedAt: '@datetime(T)',
+          createdAt: '@datetime(T)',
+        }),
+      );
+    }
+
+    const mockDatas = mock({
+      'data|1-50': [
+        {
+          id: '@guid',
+          username: '@name',
+          'isLocked|+1': [true, false],
+          'clientLimit|1': [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+          updatedAt: '@datetime(T)',
+          createdAt: '@datetime(T)',
+        },
+      ],
+      'total|1': [5, 20, 50],
+      success: true,
+      pageSize,
+      current,
+    });
+
+    const data = mockDatas.data?.map(
+      (item: { updatedAt: string | number; createdAt: string | number }) => {
+        return {
+          ...item,
+          updatedAt: +item.updatedAt,
+          createdAt: +item.createdAt,
+        };
+      },
+    );
+
+    mockDatas.data = data;
+    return res.json(mockDatas);
+  },
 };

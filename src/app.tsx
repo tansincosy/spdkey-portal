@@ -1,16 +1,71 @@
 import type { Settings as LayoutSettings } from '@ant-design/pro-layout';
 import { SettingDrawer } from '@ant-design/pro-layout';
 import { PageLoading } from '@ant-design/pro-layout';
-import type { RunTimeLayoutConfig } from 'umi';
-import { history, Link } from 'umi';
+import type { RequestConfig, RunTimeLayoutConfig } from 'umi';
+import { history, Link, request as umiRequest } from 'umi';
 import RightContent from '@/components/RightContent';
 import Footer from '@/components/Footer';
-import { currentUser as queryCurrentUser } from './services/ant-design-pro/api';
+import {
+  addDevice,
+  currentUser as queryCurrentUser,
+  refreshAccessToken,
+  updateDevice,
+} from './services';
 import { BookOutlined, LinkOutlined } from '@ant-design/icons';
 import defaultSettings from '../config/defaultSettings';
+import { session } from './util';
+import type { RequestOptionsInit, ResponseError } from 'umi-request';
+import UAParser from 'ua-parser-js';
+import { isEmpty } from 'lodash';
+import { message, notification } from 'antd';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
+
+const registerDevice = async () => {
+  const uaParser = new UAParser();
+  const {
+    os,
+    browser: { name },
+    engine,
+  } = uaParser.getResult();
+  const deviceId = crypto.randomUUID();
+  const osInfo = `${os.name}_${os.version}`;
+  const engineInfo = `${engine.name}_${engine.version}`;
+  const { id, deviceSecret } = await addDevice({
+    data: {
+      deviceId,
+      os: osInfo,
+      engine: engineInfo,
+      platform: osInfo + '_' + engineInfo,
+      name: `${os.name}_${name}_${engine.name}_${crypto.randomUUID()}`,
+    },
+  });
+  session.put('device', { id, deviceId, deviceSecret }, true);
+};
+
+const setDeviceState = async () => {
+  const deviceInfo = session.get<API.Device>('device');
+  const uaParser = new UAParser();
+  const { os, engine } = uaParser.getResult();
+  const osInfo = `${os.name}_${os.version}`;
+  const engineInfo = `${engine.name}_${engine.version}`;
+  if (deviceInfo?.id) {
+    await updateDevice({
+      data: {
+        id: deviceInfo?.id,
+        isOnline: 1,
+        os: osInfo,
+        engine: engineInfo,
+        platform: osInfo + '_' + engineInfo,
+      },
+    }).catch(() => {
+      registerDevice();
+    });
+  } else {
+    registerDevice();
+  }
+};
 
 /** 获取用户信息比较慢的时候会展示一个 loading */
 export const initialStateConfig = {
@@ -26,10 +81,11 @@ export async function getInitialState(): Promise<{
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
+  setDeviceState();
   const fetchUserInfo = async () => {
     try {
-      const msg = await queryCurrentUser();
-      return msg.data;
+      const userInfo = await queryCurrentUser();
+      return userInfo;
     } catch (error) {
       history.push(loginPath);
     }
@@ -105,4 +161,148 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     },
     ...initialState?.settings,
   };
+};
+
+const codeMessage = {
+  200: '服务器成功返回请求的数据。',
+  201: '新建或修改数据成功。',
+  202: '一个请求已经进入后台排队（异步任务）。',
+  204: '删除数据成功。',
+  400: '发出的请求有错误，服务器没有进行新建或修改数据的操作。',
+  401: '用户没有权限（令牌、用户名、密码错误）。',
+  403: '用户得到授权，但是访问是被禁止的。',
+  404: '发出的请求针对的是不存在的记录，服务器没有进行操作。',
+  405: '请求方法不被允许。',
+  406: '请求的格式不可得。',
+  410: '请求的资源被永久删除，且不会再得到的。',
+  422: '当创建一个对象时，发生一个验证错误。',
+  500: '服务器发生错误，请检查服务器。',
+  502: '网关错误。',
+  503: '服务不可用，服务器暂时过载或维护。',
+  504: '网关超时。',
+};
+
+const errorHandler = async (error: ResponseError) => {
+  const { response } = error;
+  const { errorMessage } = await response.json();
+  if (response && response.status) {
+    const errorText = codeMessage[response.status] || response.statusText;
+    const { status, url } = response;
+    if ([400, 401].includes(response.status)) {
+      message.error(errorMessage);
+      throw error;
+    }
+
+    notification.error({
+      message: `请求错误 ${status}: ${url}`,
+      description: errorText,
+    });
+  }
+
+  if (!response) {
+    notification.error({
+      description: '您的网络发生异常，无法连接服务器',
+      message: '网络异常',
+    });
+  }
+  throw error;
+};
+
+const getHeader = () => {
+  const tokenInfo = session.get<API.Token>('token') || {};
+  return !isEmpty(tokenInfo)
+    ? {
+        Authorization: `${tokenInfo.type} ${tokenInfo.accessToken}`,
+      }
+    : undefined;
+};
+
+let isRefreshing = false; // 是否正在刷新
+const subscribers: any[] = []; // 重试队列，每一项将是一个待执行的函数形式
+
+const addSubscriber = (listener: (accessToken: string) => void) => subscribers.push(listener);
+
+// 执行被缓存等待的接口事件
+const notifySubscriber = (newAccessToken = '') => {
+  subscribers.forEach((callback) => callback(newAccessToken));
+  subscribers.length = 0;
+};
+
+// 刷新 token 请求
+const refreshTokenRequest = async () => {
+  const tokenInfo = session.get<API.Token>('token') || {};
+  if (!tokenInfo.refreshToken || isEmpty(tokenInfo)) {
+    session.remove('token');
+    history.push(loginPath);
+    isRefreshing = false;
+    return;
+  }
+  try {
+    const newTokenInfo = await refreshAccessToken(tokenInfo.refreshToken || '');
+    session.put('token', newTokenInfo, true);
+    notifySubscriber(newTokenInfo.accessToken);
+  } catch (e) {
+    console.error('请求刷新 token 失败');
+  }
+  isRefreshing = false;
+};
+
+// 判断如何响应
+function checkStatus(response: Response, options: RequestOptionsInit) {
+  const { url } = response;
+  if (!isRefreshing) {
+    isRefreshing = true;
+    refreshTokenRequest();
+  }
+
+  // 正在刷新 token，返回一个未执行 resolve 的 promise
+  return new Promise<Response>((resolve) => {
+    // 将resolve放进队列，用一个函数形式来保存，等token刷新后直接执行
+    addSubscriber((newAccessToken) => {
+      const newOptions = {
+        ...options,
+        prefix: '',
+        params: {},
+        headers: {
+          Authorization: `Bearer ${newAccessToken}`,
+        },
+      };
+      resolve(umiRequest(url, newOptions));
+    });
+  });
+}
+
+const responseHandler = async (response: Response, options: RequestOptionsInit) => {
+  const res = await response.clone().json();
+  switch (res.errorCode) {
+    case 'MOV:101012':
+    case 'MOV:101008':
+      return checkStatus(response, options);
+    case 'MOV:101008':
+    case 'MOV:101009':
+      session.remove('token');
+      history.push(loginPath);
+      return response;
+    default:
+      break;
+  }
+  return response;
+};
+
+// https://umijs.org/zh-CN/plugins/plugin-request
+export const request: RequestConfig = {
+  errorHandler,
+  responseInterceptors: [responseHandler],
+  requestInterceptors: [
+    (_url, options) => {
+      if (_url.indexOf('token') === -1) {
+        // eslint-disable-next-line no-param-reassign
+        options.headers = getHeader();
+      }
+      return {
+        url: _url,
+        options,
+      };
+    },
+  ],
 };

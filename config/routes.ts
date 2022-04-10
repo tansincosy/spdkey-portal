@@ -18,39 +18,48 @@
       },
     ],
   },
+  // {
+  //   path: '/epg',
+  //   name: 'epg',
+  //   icon: 'icon-pindaoEPG',
+  //   routes: [
+  //     {
+  //       path: '/epg/channel',
+  //       name: 'channel',
+  //       component: './live/List',
+  //     },
+  //   ],
+  // },
   {
-    path: '/welcome',
-    name: 'welcome',
-    icon: 'smile',
-    component: './Welcome',
-  },
-  {
-    path: '/admin',
-    name: 'admin',
-    icon: 'crown',
-    access: 'canAdmin',
-    component: './Admin',
+    path: '/settings',
+    name: 'setting',
+    icon: 'icon-setting',
     routes: [
+      // {
+      //   path: '/settings/user',
+      //   name: 'user-manager-list',
+      //   component: './user/List',
+      // },
       {
-        path: '/admin/sub-page',
-        name: 'sub-page',
-        icon: 'smile',
-        component: './Welcome',
+        path: '/settings/device',
+        name: 'device-list',
+        component: './device/List',
       },
       {
-        component: './404',
+        path: '/settings/logs',
+        name: 'settings-logs',
+        component: './actionLogs/List',
+      },
+      {
+        path: '/settings/config',
+        name: 'settings-config',
+        component: './customConfig/List',
       },
     ],
   },
   {
-    name: 'list.table-list',
-    icon: 'table',
-    path: '/list',
-    component: './TableList',
-  },
-  {
     path: '/',
-    redirect: '/welcome',
+    redirect: '/settings/device',
   },
   {
     component: './404',

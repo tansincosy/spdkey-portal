@@ -72,4 +72,26 @@ declare namespace API {
     id?: string;
     name?: string;
   };
+
+  type Channel = {
+    id?: string;
+    updatedAt?: string;
+    createdAt?: string;
+    title?: string;
+    playSources?: string[];
+    channelId?: string;
+    playbills?: PlayBill[];
+    images?: { href?: string; type?: string }[];
+  };
+
+  type PlayBill = {
+    id?: string;
+    updatedAt?: string;
+    createdAt?: string;
+    title?: string;
+    channelId?: string;
+    startTime?: string;
+    endTime?: string;
+    images: { href?: string; type?: string }[];
+  };
 }

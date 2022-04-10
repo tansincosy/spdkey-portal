@@ -1,4 +1,3 @@
-import { PlusOutlined } from '@ant-design/icons';
 import { Button, message, Drawer, Form } from 'antd';
 import React, { useState, useRef } from 'react';
 import { useIntl, FormattedMessage } from 'umi';
@@ -7,15 +6,7 @@ import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
 import ProDescriptions from '@ant-design/pro-descriptions';
-import {
-  getUsers,
-  removeUser,
-  getUserInfo,
-  addUser,
-  updateUser,
-  updateDevice,
-  getDevicesByUserId,
-} from '@/services/modules';
+import { removeDevice, getDeviceInfo, getDevices, updateDevice } from '@/services';
 import {
   DrawerForm,
   ProFormDigit,
@@ -30,11 +21,11 @@ import {
  *
  * @param selectedRows
  */
-const handleRemove = async (selectedRows: API.User[]) => {
+const handleRemove = async (selectedRows: API.Device[]) => {
   const hide = message.loading('正在删除');
   if (!selectedRows) return true;
   try {
-    await removeUser({
+    await removeDevice({
       data: {
         ids: selectedRows.map((row) => row.id),
       },
@@ -49,26 +40,16 @@ const handleRemove = async (selectedRows: API.User[]) => {
   }
 };
 
-const handleAdd = async (fields: API.User) => {
+const handleUpdate = async (fields: API.Device) => {
   const hide = message.loading('正在添加');
   console.log(fields);
+  const resultData = {
+    ...fields,
+    isLocked: fields.isLocked ? 1 : 0,
+    isOnline: fields.isOnline ? 1 : 0,
+  };
   try {
-    await addUser({ data: fields });
-    hide();
-    message.success('新增成功');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('新增失败，请重试！');
-    return false;
-  }
-};
-
-const handleUpdate = async (fields: API.User) => {
-  const hide = message.loading('正在添加');
-  console.log(fields);
-  try {
-    await updateUser({ data: fields });
+    await updateDevice({ data: resultData });
     hide();
     message.success('更新成功');
     return true;
@@ -83,17 +64,12 @@ const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [createDrawerVisible, setCreateDrawerVisible] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<API.User>();
-  const [selectedRowsState, setSelectedRows] = useState<API.User[]>([]);
-  const [userForm] = Form.useForm();
-  const [isUpdateForm, setIsUpdateForm] = useState<boolean>(false);
-  const [userClients, setUserClients] = useState<API.Device[]>([]);
+  const [currentRow, setCurrentRow] = useState<API.Device>();
+  const [selectedRowsState, setSelectedRows] = useState<API.Device[]>([]);
+  const [deviceForm] = Form.useForm();
   const getUserInfoFromService = async (id: string) => {
-    setUserClients([]);
-    const userInfo = await getUserInfo({ id });
-    const clientList = await getDevicesByUserId({ userId: id });
-    setUserClients(clientList);
-    setCurrentRow(userInfo);
+    const deviceInfo = await getDeviceInfo({ id });
+    setCurrentRow(deviceInfo);
   };
 
   /**
@@ -101,59 +77,16 @@ const TableList: React.FC = () => {
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
-  const clientColume: ProColumns<API.Device>[] = [
-    {
-      title: intl.formatMessage({ id: 'pages.client.table.id' }),
-      dataIndex: 'id',
-    },
-    {
-      title: intl.formatMessage({ id: 'pages.client.table.name' }),
-      dataIndex: 'name',
-    },
-    {
-      title: intl.formatMessage({ id: 'pages.client.table.isOnline' }),
-      dataIndex: 'isOnline',
-    },
-    {
-      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
-      dataIndex: 'option',
-      valueType: 'option',
-      render: (_, record) => [
-        record.isOnline && (
-          <Button
-            danger
-            type="link"
-            key="offline"
-            onClick={async () => {
-              await updateDevice({
-                data: {
-                  ...record,
-                  isOnline: false,
-                },
-              });
-              message.success('已下线');
-            }}
-          >
-            <FormattedMessage id="pages.searchTable.offline" defaultMessage="下线" />
-          </Button>
-        ),
-      ],
-    },
-  ];
-  const columns: ProColumns<API.User>[] = [
+  const columns: ProColumns<API.Device>[] = [
     {
       title: (
-        <FormattedMessage
-          id="pages.searchTable.updateForm.username.nameLabel"
-          defaultMessage="用户名"
-        />
+        <FormattedMessage id="pages.searchTable.updateForm.deviceName" defaultMessage="设备名字" />
       ),
-      dataIndex: 'username',
+      dataIndex: 'name',
       render: (dom, entity) => {
         return (
           <a
             onClick={() => {
-              setIsUpdateForm(false);
               if (entity.id) {
                 getUserInfoFromService(entity.id);
                 setShowDetail(true);
@@ -170,28 +103,70 @@ const TableList: React.FC = () => {
       dataIndex: 'isLocked',
       hideInForm: true,
       valueEnum: {
-        true: {
+        1: {
           text: (
             <FormattedMessage id="pages.searchTable.nameStatus.yes" defaultMessage="Shut down" />
           ),
           status: 'Error',
         },
-        false: {
+        0: {
           text: <FormattedMessage id="pages.searchTable.nameStatus.no" defaultMessage="Running" />,
-          status: 'Default',
+          status: 'Success',
         },
       },
     },
     {
+      title: <FormattedMessage id="pages.client.table.isOnline" defaultMessage="Description" />,
+      dataIndex: 'isOnline',
+      hideInForm: true,
+      valueEnum: {
+        1: {
+          text: (
+            <FormattedMessage id="pages.searchTable.nameStatus.yes" defaultMessage="Shut down" />
+          ),
+          status: 'Success',
+        },
+        0: {
+          text: <FormattedMessage id="pages.searchTable.nameStatus.no" defaultMessage="Running" />,
+          status: 'Warning',
+        },
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.client.table.clientId" defaultMessage="设备id" />,
+      dataIndex: 'deviceId',
+      hideInForm: true,
+      hideInTable: true,
+    },
+    {
       title: (
         <FormattedMessage
-          id="pages.searchTable.clientLimit"
-          defaultMessage="Number of service calls"
+          id="pages.client.table.accessTokenValidateSeconds"
+          defaultMessage="令牌有效时间"
         />
       ),
+      dataIndex: 'accessTokenValidateSeconds',
+      hideInForm: true,
+      hideInTable: true,
+      tooltip: <FormattedMessage id="pages.client.table.secondsTip" defaultMessage="单位：秒" />,
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="pages.client.table.refreshTokenValidateSeconds"
+          defaultMessage="重置令牌有效时间"
+        />
+      ),
+      tooltip: <FormattedMessage id="pages.client.table.secondsTip" defaultMessage="单位：秒" />,
+      dataIndex: 'refreshTokenValidateSeconds',
+      hideInForm: true,
+      hideInTable: true,
+    },
+    {
+      title: <FormattedMessage id="pages.searchTable.platform" defaultMessage="平台" />,
       search: false,
       hideInForm: true,
-      dataIndex: 'clientLimit',
+      dataIndex: 'os',
     },
     {
       search: false,
@@ -217,9 +192,11 @@ const TableList: React.FC = () => {
           onClick={async () => {
             setCurrentRow(record);
             if (record.id) {
-              setIsUpdateForm(true);
-              const userInfo = await getUserInfo({ id: record.id });
-              userForm.setFieldsValue(userInfo);
+              const deviceInfo = await getDeviceInfo({ id: record.id });
+              console.log('deviceInfo', deviceInfo);
+              deviceInfo.isLocked = deviceInfo.isLocked === 1;
+              deviceInfo.isOnline = deviceInfo.isOnline === 1;
+              deviceForm.setFieldsValue(deviceInfo);
               setCreateDrawerVisible(true);
             }
           }}
@@ -230,9 +207,9 @@ const TableList: React.FC = () => {
           danger
           type="link"
           key="delete"
-          onClick={() => {
-            handleRemove([record]);
-            setIsUpdateForm(false);
+          onClick={async () => {
+            await handleRemove([record]);
+            actionRef.current?.reloadAndRest?.();
           }}
         >
           <FormattedMessage id="pages.searchTable.delete" defaultMessage="删除" />
@@ -243,7 +220,7 @@ const TableList: React.FC = () => {
 
   return (
     <PageContainer>
-      <ProTable<API.User, API.PageParams>
+      <ProTable<API.Device, API.PageParams>
         headerTitle={intl.formatMessage({
           id: 'pages.searchTable.title',
           defaultMessage: 'Enquiry form',
@@ -253,20 +230,7 @@ const TableList: React.FC = () => {
         search={{
           labelWidth: 120,
         }}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              userForm.resetFields();
-              setIsUpdateForm(false);
-              setCreateDrawerVisible(true);
-            }}
-          >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>,
-        ]}
-        request={getUsers}
+        request={getDevices}
         columns={columns}
         rowSelection={{
           onChange: (_, selectedRows) => {
@@ -309,19 +273,17 @@ const TableList: React.FC = () => {
       )}
       <DrawerForm
         title={intl.formatMessage({
-          id: 'pages.user.addForm',
-          defaultMessage: '新增用户',
+          id: 'pages.device.editForm',
+          defaultMessage: '设置设备',
         })}
-        form={userForm}
+        form={deviceForm}
         width="50%"
         visible={createDrawerVisible}
         onVisibleChange={setCreateDrawerVisible}
         onFinish={async (value) => {
           let success;
           if (value.id) {
-            success = await handleUpdate(value as API.User);
-          } else {
-            success = await handleAdd(value as API.User);
+            success = await handleUpdate(value as API.Device);
           }
           if (success) {
             setCreateDrawerVisible(false);
@@ -332,73 +294,31 @@ const TableList: React.FC = () => {
         }}
       >
         <ProFormText name="id" hidden />
-        <ProFormText
-          rules={[
-            {
-              required: true,
-              message: (
-                <FormattedMessage
-                  id="pages.user.addForm.password.notEmpty"
-                  defaultMessage="不能为空"
-                />
-              ),
-            },
-          ]}
-          label={intl.formatMessage({
-            id: 'pages.user.addForm.username',
-            defaultMessage: '用户名',
-          })}
-          width="lg"
-          name="username"
-        />
-        {!isUpdateForm && (
-          <ProFormText
-            valueType="password"
-            label={intl.formatMessage({
-              id: 'pages.user.addForm.password',
-              defaultMessage: '密码',
-            })}
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="pages.user.addForm.password.notEmpty"
-                    defaultMessage="不能为空"
-                  />
-                ),
-              },
-            ]}
-            width="lg"
-            name="password"
-          />
-        )}
-
         <ProFormSelect
-          name="scopes"
+          name="grants"
+          disabled
           label={intl.formatMessage({
-            id: 'pages.user.addForm.scopes',
-            defaultMessage: '作用范围',
+            id: 'pages.device.addForm.grants',
+            defaultMessage: '授权类型',
           })}
           options={[
             {
-              label: 'web',
-              value: 'web',
+              label: 'password',
+              value: 'password',
             },
             {
-              label: 'mobile',
-              value: 'mobile',
-            },
-            {
-              label: 'stb',
-              value: 'stb',
-            },
-            {
-              label: 'portal',
-              value: 'portal',
+              label: 'redirect_url',
+              value: 'redirect_url',
             },
           ]}
           mode="tags"
+        />
+        <ProFormSwitch
+          name="isOnline"
+          label={intl.formatMessage({
+            id: 'pages.client.table.isOnline',
+            defaultMessage: '是否在线',
+          })}
         />
         <ProFormSwitch
           name="isLocked"
@@ -408,7 +328,7 @@ const TableList: React.FC = () => {
           })}
         />
         <ProFormDigit
-          name="clientLimit"
+          name="accessTokenValidateSeconds"
           rules={[
             {
               required: true,
@@ -421,13 +341,31 @@ const TableList: React.FC = () => {
             },
           ]}
           label={intl.formatMessage({
-            id: 'pages.user.addForm.clientLimit',
-            defaultMessage: '最大设备数量',
+            id: 'pages.client.table.accessTokenValidateSeconds',
+            defaultMessage: '令牌有效时间',
+          })}
+        />
+        <ProFormDigit
+          name="refreshTokenValidateSeconds"
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="pages.user.addForm.password.notEmpty"
+                  defaultMessage="不能为空"
+                />
+              ),
+            },
+          ]}
+          label={intl.formatMessage({
+            id: 'pages.client.table.refreshTokenValidateSeconds',
+            defaultMessage: '重置令牌时间',
           })}
         />
       </DrawerForm>
       <Drawer
-        width="50%"
+        width="30%"
         visible={showDetail}
         onClose={() => {
           setCurrentRow(undefined);
@@ -435,27 +373,18 @@ const TableList: React.FC = () => {
         }}
         closable={false}
       >
-        {currentRow?.username && (
+        {currentRow?.name && (
           <>
-            <ProDescriptions<API.User>
-              column={2}
-              title={currentRow?.username}
+            <ProDescriptions<API.Device>
+              column={1}
+              title={currentRow?.name}
               request={async () => ({
                 data: currentRow || {},
               })}
               params={{
                 id: currentRow?.id,
               }}
-              columns={columns as ProDescriptionsItemProps<API.User>[]}
-            />
-            <ProTable
-              options={false}
-              search={false}
-              rowKey="id"
-              dataSource={userClients}
-              size="small"
-              pagination={false}
-              columns={clientColume}
+              columns={columns as ProDescriptionsItemProps<API.Device>[]}
             />
           </>
         )}

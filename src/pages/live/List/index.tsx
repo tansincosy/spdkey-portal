@@ -6,13 +6,7 @@ import ProCard from '@ant-design/pro-card';
 // @ts-ignore
 import styles from './split.less';
 import { FooterToolbar, PageContainer } from '@ant-design/pro-layout';
-import {
-  getChannels,
-  getPlaybill,
-  removeChannel,
-  removePlaybill,
-  addChannel,
-} from '@/services/modules';
+import { getChannels, getPlaybill, removeChannel, removePlaybill, addChannel } from '@/services';
 import { FormattedMessage, useIntl } from 'umi';
 import { DrawerForm, ProFormList, ProFormText, ProFormUploadDragger } from '@ant-design/pro-form';
 import XLSX from 'xlsx';

@@ -101,7 +101,7 @@ const PlaybillList: React.FC<{ channelId?: string }> = (props) => {
             handleRemove([record]);
           }}
         >
-          <FormattedMessage id="pages.dashboard.setting.deletedButton" defaultMessage="删除" />
+          <FormattedMessage id="pages.searchTable.delete" defaultMessage="删除" />
         </Button>,
       ],
     },

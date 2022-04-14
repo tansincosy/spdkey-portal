@@ -93,4 +93,11 @@ export default {
   'pages.channel.table.list.addChannelButton': '新建频道',
   'pages.channel.table.list.addPlaybillButton': '新建节目单',
   'pages.channel.table.list.channel-url': '直播播放地址',
+  'pages.searchTable.updateForm.deviceName': '设备名称',
+  'pages.searchTable.isLocked': '是否上锁',
+  'pages.searchTable.platform': '平台',
+  'pages.searchTable.createdAt': '创建时间',
+  'pages.searchTable.updatedAt': '更新时间',
+  'pages.searchTable.delete': '删除',
+  'pages.dashboard.setting.deletedButton': '删除',
 };

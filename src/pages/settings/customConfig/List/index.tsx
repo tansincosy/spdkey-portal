@@ -177,7 +177,7 @@ const TableList: React.FC = () => {
             }
           }}
         >
-          <FormattedMessage id="pages.dashboard.setting.deletedButton" defaultMessage="删除" />
+          <FormattedMessage id="pages.searchTable.delete" defaultMessage="删除" />
         </Button>,
       ],
     },

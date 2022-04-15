@@ -228,8 +228,15 @@ const ChannelList: React.FC<{
     },
   ];
 
+  //[channel -> inputPG ]
+
+  // new PG
+  //edit program data
+  //edit channel data
+
   const importToJson = (jsonArray: any) => {
     const resultJson = jsonArray
+      .filter((item: any | null) => item)
       .map((objArr: any, index: number) => {
         if (index !== 0) {
           const [title, chanId, startTime, endTime] = objArr;
@@ -240,8 +247,7 @@ const ChannelList: React.FC<{
             endTime: endTime,
           };
         }
-      })
-      .filter((item: any | null) => item);
+      });
     setPlayBillList(resultJson);
   };
 

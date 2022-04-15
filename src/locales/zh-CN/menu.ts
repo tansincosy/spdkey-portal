@@ -56,4 +56,5 @@ export default {
   'menu.editor.koni': '拓扑编辑器',
   'menu.epg': 'EPG',
   'menu.epg.channel': '频道',
+  'menu.epg.channel-source': '频道源',
 };

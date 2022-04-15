@@ -100,4 +100,5 @@ export default {
   'pages.searchTable.updatedAt': '更新时间',
   'pages.searchTable.delete': '删除',
   'pages.dashboard.setting.deletedButton': '删除',
+  'pages.searchTable.clientLimit': '最大设备数量',
 };

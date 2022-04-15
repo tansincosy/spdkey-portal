@@ -94,4 +94,17 @@ declare namespace API {
     endTime?: string;
     images: { href?: string; type?: string }[];
   };
+
+  type ChannelSource = {
+    id?: string;
+    updatedAt?: string;
+    createdAt?: string;
+    title?: string;
+    startTime?: string;
+    endTime?: string;
+    images?: { href?: string; type?: string }[];
+    country?: string;
+    language?: string;
+    playUrl?: string;
+  };
 }

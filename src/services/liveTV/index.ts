@@ -73,3 +73,19 @@ export async function removePlaybill(options?: Record<string, any>) {
     ...(options || {}),
   });
 }
+
+export async function getChannelSource(
+  params: {
+    current?: number;
+    pageSize?: number;
+  },
+  options?: Record<string, any>,
+) {
+  return request<API.Channel[]>('/api/channel/source', {
+    method: 'GET',
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}

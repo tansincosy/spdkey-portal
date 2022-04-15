@@ -27,6 +27,11 @@ export default [
     icon: 'icon-pindaoEPG',
     routes: [
       {
+        path: '/epg/channel-source',
+        name: 'channel-source',
+        component: './live/channel-source',
+      },
+      {
         path: '/epg/channel',
         name: 'channel',
         component: './live/List',

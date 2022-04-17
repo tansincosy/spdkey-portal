@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Form, Image, message, Modal } from 'antd';
+import { Button, Form, Image, message } from 'antd';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import ProCard from '@ant-design/pro-card';
@@ -15,7 +15,13 @@ import {
   getChannelSource,
 } from '@/services';
 import { FormattedMessage, useIntl } from 'umi';
-import { DrawerForm, ProFormList, ProFormText, ProFormUploadDragger } from '@ant-design/pro-form';
+import {
+  DrawerForm,
+  ProFormField,
+  ProFormList,
+  ProFormText,
+  ProFormUploadDragger,
+} from '@ant-design/pro-form';
 import XLSX from 'xlsx';
 
 const handleRemove = async (selectedRows: API.PlayBill[]) => {
@@ -200,7 +206,6 @@ const ChannelList: React.FC<{
   const [playBillList, setPlayBillList] = useState<API.PlayBill[]>([]);
   const actionRef = useRef<ActionType>();
   const intl = useIntl();
-  const [preAddTypeModalVisible, setPreAddTypeModalVisible] = useState<boolean>(false);
   const [createChannelSourceVisible, setCreateChannelSourceVisible] = useState<boolean>(false);
   const [, setSelectedRows] = useState<API.ChannelSource[]>([]);
   const columns: ProColumns<API.Channel>[] = [
@@ -268,15 +273,6 @@ const ChannelList: React.FC<{
     showUploadList: false,
   };
 
-  const handleAdd = () => {
-    setPreAddTypeModalVisible(false);
-    setCreateDrawerVisible(true);
-  };
-
-  const sourceAdd = () => {
-    setPreAddTypeModalVisible(false);
-    setCreateChannelSourceVisible(true);
-  };
   return (
     <>
       <ProTable<API.Channel, API.PageParams>
@@ -300,7 +296,7 @@ const ChannelList: React.FC<{
               onClick={() => {
                 setPlayBillList([]);
                 channelForm.resetFields();
-                setPreAddTypeModalVisible(true);
+                setCreateDrawerVisible(true);
               }}
             >
               <FormattedMessage
@@ -322,38 +318,15 @@ const ChannelList: React.FC<{
           };
         }}
       />
-      <Modal
-        footer={[]}
-        bodyStyle={{
-          textAlign: 'center',
-        }}
-        onCancel={() => setPreAddTypeModalVisible(false)}
-        visible={preAddTypeModalVisible}
-        title={intl.formatMessage({
-          id: 'pages.searchTable.add.type',
-          defaultMessage: '选择新增方式',
-        })}
-      >
-        <Button size="small" type="link" onClick={handleAdd}>
-          {intl.formatMessage({
-            id: 'pages.searchTable.add.handle',
-            defaultMessage: '手动添加',
-          })}
-        </Button>
-        <Button size="small" type="link" onClick={sourceAdd}>
-          {intl.formatMessage({
-            id: 'pages.searchTable.add.sourceAdd',
-            defaultMessage: '资源新增',
-          })}
-        </Button>
-      </Modal>
+
       <DrawerForm
-        title={
+        title={[
           <FormattedMessage
+            key="title"
             id="pages.channel.table.list.addChannelButton"
             defaultMessage="新建频道"
-          />
-        }
+          />,
+        ]}
         form={channelForm}
         width="50%"
         visible={createDrawerVisible}
@@ -382,6 +355,21 @@ const ChannelList: React.FC<{
           }
         }}
       >
+        <ProFormField>
+          <Button
+            type="primary"
+            onClick={() => {
+              setCreateChannelSourceVisible(true);
+            }}
+            key="addBtn"
+          >
+            {intl.formatMessage({
+              id: 'pages.searchTable.add.sourceAdd',
+              defaultMessage: '资源新增',
+            })}
+          </Button>
+          ,
+        </ProFormField>
         <ProFormText
           name="title"
           label={intl.formatMessage({
@@ -478,7 +466,7 @@ const ChannelList: React.FC<{
           <FormattedMessage id="pages.channel.table.list.chosenChannel" defaultMessage="选择频道" />
         }
         form={channelForm}
-        width="50%"
+        width="30%"
         visible={createChannelSourceVisible}
         onVisibleChange={setCreateChannelSourceVisible}
         onFinish={async (value: API.ChannelSource) => {

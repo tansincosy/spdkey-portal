@@ -81,11 +81,27 @@ export async function getChannelSource(
   },
   options?: Record<string, any>,
 ) {
-  return request<API.Channel[]>('/api/channel/source', {
+  return request<API.ChannelSource[]>('/api/channel/source', {
     method: 'GET',
     params: {
       ...params,
     },
     ...(options || {}),
+  });
+}
+
+export async function getChannelSourcesInfo(params: { id: string }) {
+  return request<API.ChannelSource>('/api/channel/source', {
+    method: 'GET',
+    params: {
+      ...params,
+    },
+  });
+}
+
+export async function refreshChannelSource() {
+  return request<API.ChannelSource>('/api/channel/source/test', {
+    method: 'GET',
+    params: {},
   });
 }

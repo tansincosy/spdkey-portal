@@ -1,4 +1,13 @@
 declare namespace API {
+  enum ImageType {
+    poster = 10,
+    banner = 20,
+    logo = 30,
+    icon = 40,
+    cover = 50,
+    avatar = 60,
+  }
+
   type User = {
     key?: string;
     id?: string;

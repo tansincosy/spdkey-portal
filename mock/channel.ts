@@ -2,6 +2,10 @@ import { mock } from 'mockjs';
 import { Request, Response } from 'express';
 
 export default {
+  //资源测试
+  'GET /api/channel/source/test': async (req: Request, res: Response) => {
+    return res.json({});
+  },
   'GET /api/channel/source': async (req: Request, res: Response) => {
     const { current = 1, pageSize = 10, id } = req.query;
     if (id) {
@@ -12,9 +16,10 @@ export default {
           images: [
             {
               href: '@image(70*30)',
-              type: 'LOGO',
+              type: 30,
             },
           ],
+          //播放地址
           'playUrl|1': ['@url', '@url(0,100)', '@url(0,100)'],
           country: '@country',
           language: '@language',
@@ -29,7 +34,7 @@ export default {
           images: [
             {
               href: '@image(70*30)',
-              type: 'LOGO',
+              type: 30,
             },
           ],
           id: '@guid',

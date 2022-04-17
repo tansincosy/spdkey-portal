@@ -349,7 +349,7 @@ const ChannelList: React.FC<{
           name="channelId"
           label={intl.formatMessage({
             id: 'pages.channel.table.list.channelId',
-            defaultMessage: '频道ID',
+            defaultMessage: '频道NO.',
           })}
         />
         <ProFormList

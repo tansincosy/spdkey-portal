@@ -107,4 +107,8 @@ export default {
   'pages.searchTable.status': '状态',
   'pages.searchTable.language': '语言',
   'pages.searchTable.refresh-resource': '刷新资源',
+  'pages.searchTable.add.type': '选择新增方式',
+  'pages.searchTable.add.handle': '手动添加',
+  'pages.searchTable.add.sourceAdd': '通过资源新增',
+  'pages.channel.table.list.chosenChannel': '选择频道',
 };

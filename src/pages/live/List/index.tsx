@@ -1,12 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Form, Image, message } from 'antd';
+import { Button, Form, Image, message, Modal } from 'antd';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import ProCard from '@ant-design/pro-card';
 // @ts-ignore
 import styles from './split.less';
 import { FooterToolbar, PageContainer } from '@ant-design/pro-layout';
-import { getChannels, getPlaybill, removeChannel, removePlaybill, addChannel } from '@/services';
+import {
+  getChannels,
+  getPlaybill,
+  removeChannel,
+  removePlaybill,
+  addChannel,
+  getChannelSource,
+} from '@/services';
 import { FormattedMessage, useIntl } from 'umi';
 import { DrawerForm, ProFormList, ProFormText, ProFormUploadDragger } from '@ant-design/pro-form';
 import XLSX from 'xlsx';
@@ -193,6 +200,9 @@ const ChannelList: React.FC<{
   const [playBillList, setPlayBillList] = useState<API.PlayBill[]>([]);
   const actionRef = useRef<ActionType>();
   const intl = useIntl();
+  const [preAddTypeModalVisible, setPreAddTypeModalVisible] = useState<boolean>(false);
+  const [createChannelSourceVisible, setCreateChannelSourceVisible] = useState<boolean>(false);
+  const [, setSelectedRows] = useState<API.ChannelSource[]>([]);
   const columns: ProColumns<API.Channel>[] = [
     {
       title: <FormattedMessage id="pages.channel.table.list.logo" defaultMessage="台标" />,
@@ -257,6 +267,16 @@ const ChannelList: React.FC<{
     name: 'file',
     showUploadList: false,
   };
+
+  const handleAdd = () => {
+    setPreAddTypeModalVisible(false);
+    setCreateDrawerVisible(true);
+  };
+
+  const sourceAdd = () => {
+    setPreAddTypeModalVisible(false);
+    setCreateChannelSourceVisible(true);
+  };
   return (
     <>
       <ProTable<API.Channel, API.PageParams>
@@ -280,7 +300,7 @@ const ChannelList: React.FC<{
               onClick={() => {
                 setPlayBillList([]);
                 channelForm.resetFields();
-                setCreateDrawerVisible(true);
+                setPreAddTypeModalVisible(true);
               }}
             >
               <FormattedMessage
@@ -302,6 +322,31 @@ const ChannelList: React.FC<{
           };
         }}
       />
+      <Modal
+        footer={[]}
+        bodyStyle={{
+          textAlign: 'center',
+        }}
+        onCancel={() => setPreAddTypeModalVisible(false)}
+        visible={preAddTypeModalVisible}
+        title={intl.formatMessage({
+          id: 'pages.searchTable.add.type',
+          defaultMessage: '选择新增方式',
+        })}
+      >
+        <Button size="small" type="link" onClick={handleAdd}>
+          {intl.formatMessage({
+            id: 'pages.searchTable.add.handle',
+            defaultMessage: '手动添加',
+          })}
+        </Button>
+        <Button size="small" type="link" onClick={sourceAdd}>
+          {intl.formatMessage({
+            id: 'pages.searchTable.add.sourceAdd',
+            defaultMessage: '资源新增',
+          })}
+        </Button>
+      </Modal>
       <DrawerForm
         title={
           <FormattedMessage
@@ -423,6 +468,100 @@ const ChannelList: React.FC<{
               title: (
                 <FormattedMessage id="pages.channel.table.list.endtime" defaultMessage="结束时间" />
               ),
+            },
+          ]}
+        />
+      </DrawerForm>
+
+      <DrawerForm
+        title={
+          <FormattedMessage id="pages.channel.table.list.chosenChannel" defaultMessage="选择频道" />
+        }
+        form={channelForm}
+        width="50%"
+        visible={createChannelSourceVisible}
+        onVisibleChange={setCreateChannelSourceVisible}
+        onFinish={async (value: API.ChannelSource) => {
+          let success;
+          if (value.id) {
+            console.log('update');
+          } else {
+            const { title } = value;
+            if (title) {
+              success = await handleAddChannel({
+                title,
+                playSources: [],
+                channelId: '',
+                playbills: playBillList,
+              });
+            }
+          }
+          if (success) {
+            setCreateChannelSourceVisible(false);
+            if (actionRef.current) {
+              actionRef.current.reload();
+            }
+          }
+        }}
+      >
+        <ProTable
+          rowKey="title"
+          request={getChannelSource}
+          size="small"
+          rowSelection={{
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          }}
+          columns={[
+            {
+              dataIndex: 'title',
+              title: (
+                <FormattedMessage id="pages.searchTable.channelName" defaultMessage="频道名" />
+              ),
+            },
+            {
+              title: <FormattedMessage id="pages.searchTable.status" defaultMessage="状态" />,
+              dataIndex: 'status',
+              hideInForm: true,
+              valueEnum: {
+                '-1': {
+                  text: (
+                    <FormattedMessage
+                      id="pages.searchTable.nameStatus.yes"
+                      defaultMessage="Shut down"
+                    />
+                  ),
+                  status: 0,
+                },
+                '1': {
+                  text: (
+                    <FormattedMessage
+                      id="pages.searchTable.nameStatus.no"
+                      defaultMessage="Running"
+                    />
+                  ),
+                  status: 1,
+                },
+                '0': {
+                  text: (
+                    <FormattedMessage
+                      id="pages.searchTable.nameStatus.no"
+                      defaultMessage="Running"
+                    />
+                  ),
+                  status: 1,
+                },
+              },
+            },
+            {
+              search: false,
+              title: (
+                <FormattedMessage id="pages.searchTable.updatedAt" defaultMessage="更新时间" />
+              ),
+              dataIndex: 'updatedAt',
+              valueType: 'dateTime',
+              hideInForm: true,
             },
           ]}
         />

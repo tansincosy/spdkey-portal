@@ -15,6 +15,7 @@ const Settings: LayoutSettings & {
   headerHeight: 48,
   splitMenus: false,
   title: '杂物社',
+  iconfontUrl: '//at.alicdn.com/t/font_2854422_nhieuticlm.js',
 };
 
 export default Settings;

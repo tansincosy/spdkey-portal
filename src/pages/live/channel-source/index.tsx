@@ -9,7 +9,7 @@ import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
 import ProDescriptions from '@ant-design/pro-descriptions';
 import { getChannelSource, getChannelSourcesInfo, refreshChannelSource } from '@/services';
 
-const TableList: React.FC = () => {
+const ChannelList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<API.ChannelSource>();
@@ -155,4 +155,4 @@ const TableList: React.FC = () => {
   );
 };
 
-export default TableList;
+export default ChannelList;

@@ -6,6 +6,20 @@ export default {
   'GET /api/channel/source/test': async (req: Request, res: Response) => {
     return res.json({});
   },
+  'POST /api/channel/source': async (req: Request, res: Response) => {
+    return res.json(
+      mock({
+        id: '@guid()',
+      }),
+    );
+  },
+  'DELETE /api/channel/source': async (req: Request, res: Response) => {
+    return res.json(
+      mock({
+        id: '@guid()',
+      }),
+    );
+  },
   'GET /api/channel/source': async (req: Request, res: Response) => {
     const { current = 1, pageSize = 10, id } = req.query;
     if (id) {
@@ -22,7 +36,7 @@ export default {
           //播放地址
           'playUrl|1': ['@url', '@url(0,100)', '@url(0,100)'],
           country: '@country',
-          language: '@language',
+          language: '@title(2,4)',
           updatedAt: '@datetime(T)',
           createdAt: '@datetime(T)',
         }),
@@ -39,6 +53,7 @@ export default {
           ],
           id: '@guid',
           title: '@name',
+          language: '@title(2,4)',
           'status|1': ['1', '0', '-1'],
           updatedAt: '@datetime(T)',
           createdAt: '@datetime(T)',

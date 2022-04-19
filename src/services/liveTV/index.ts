@@ -99,9 +99,24 @@ export async function getChannelSourcesInfo(params: { id: string }) {
   });
 }
 
+export async function addChannelSourcesInfo(options: Record<string, any>) {
+  console.log(options);
+  return request<API.ChannelSource>('/api/channel/source', {
+    method: 'POST',
+    ...(options || {}),
+  });
+}
+
 export async function refreshChannelSource() {
   return request<API.ChannelSource>('/api/channel/source/test', {
     method: 'GET',
     params: {},
+  });
+}
+
+export async function removeChannelSource(options?: Record<string, any>) {
+  return request<Record<string, any>>('/api/channel/source', {
+    method: 'DELETE',
+    ...(options || {}),
   });
 }

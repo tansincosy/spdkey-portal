@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Drawer, Form, Image, message, Popconfirm } from 'antd';
+import { Button, Drawer, Form, Image, message } from 'antd';
 import React, { useState, useRef } from 'react';
 import { useIntl, FormattedMessage } from 'umi';
 import { FooterToolbar, PageContainer } from '@ant-design/pro-layout';
@@ -14,6 +14,7 @@ import {
   removeChannelSource,
 } from '@/services';
 import { DrawerForm, ProFormText } from '@ant-design/pro-form';
+import PopConfirmDel from '@/components/Popconfirm';
 
 const ChannelList: React.FC = () => {
   /**
@@ -140,21 +141,7 @@ const ChannelList: React.FC = () => {
       dataIndex: 'option',
       valueType: 'option',
       render: (_, record) => {
-        return (
-          <Popconfirm
-            title={intl.formatMessage({
-              id: 'pages.channel.form.del.is-del',
-              defaultMessage: '是否确认删除？',
-            })}
-            onConfirm={() => handleRemove([record])}
-            okText="Yes"
-            cancelText="No"
-          >
-            <a type="link">
-              <FormattedMessage id="pages.searchTable.delete" defaultMessage="删除" />
-            </a>
-          </Popconfirm>
-        );
+        return <PopConfirmDel onConfirmDel={() => handleRemove([record])} />;
       },
     },
   ];
@@ -213,26 +200,13 @@ const ChannelList: React.FC = () => {
             </div>
           }
         >
-          <Popconfirm
-            title={intl.formatMessage({
-              id: 'pages.channel.form.del.is-del',
-              defaultMessage: '是否确认删除？',
-            })}
-            onConfirm={async () => {
+          <PopConfirmDel
+            onConfirmDel={async () => {
               await handleRemove(selectedRowsState);
               setSelectedRows([]);
               actionRef.current?.reloadAndRest?.();
             }}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button danger>
-              <FormattedMessage
-                id="pages.searchTable.batchDeletion"
-                defaultMessage="Batch deletion"
-              />
-            </Button>
-          </Popconfirm>
+          />
         </FooterToolbar>
       )}
       <Drawer

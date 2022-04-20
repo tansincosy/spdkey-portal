@@ -15,14 +15,21 @@ import {
   getChannelSource,
 } from '@/services';
 import { FormattedMessage, useIntl } from 'umi';
-import {
-  DrawerForm,
-  ProFormField,
-  ProFormList,
-  ProFormText,
-  ProFormUploadDragger,
-} from '@ant-design/pro-form';
+import { DrawerForm, ProFormList, ProFormText, ProFormUploadDragger } from '@ant-design/pro-form';
 import XLSX from 'xlsx';
+import PopConfirmDel from '@/components/Popconfirm';
+let cacheCallbacks: any;
+//TODO：选择频道问题  状态不能文字展示，选择节目单时，匹配节目url 节目单channelID
+/**
+ * {
+ *
+ *  channelId: 'xxxx.xml.urlid: channelID'
+ *  选择时，不存储节目单数据，选择完成，进行存储，并且匹配关联节目单
+ *
+ * }
+ * @param selectedRows
+ * @returns
+ */
 
 const handleRemove = async (selectedRows: API.PlayBill[]) => {
   const hide = message.loading('正在删除');
@@ -105,18 +112,13 @@ const PlaybillList: React.FC<{ channelId?: string }> = (props) => {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="操作" />,
       width: 80,
       valueType: 'option',
-      render: (_, record) => [
-        <Button
-          key="del-button"
-          danger
-          type="link"
-          onClick={() => {
+      render: (_, record) => (
+        <PopConfirmDel
+          onConfirmDel={() => {
             handleRemove([record]);
           }}
-        >
-          <FormattedMessage id="pages.searchTable.delete" defaultMessage="删除" />
-        </Button>,
-      ],
+        />
+      ),
     },
   ];
 
@@ -205,9 +207,12 @@ const ChannelList: React.FC<{
   const [createDrawerVisible, setCreateDrawerVisible] = useState<boolean>(false);
   const [playBillList, setPlayBillList] = useState<API.PlayBill[]>([]);
   const actionRef = useRef<ActionType>();
+  const actionChannelSourceRef = useRef<ActionType>();
   const intl = useIntl();
   const [createChannelSourceVisible, setCreateChannelSourceVisible] = useState<boolean>(false);
-  const [, setSelectedRows] = useState<API.ChannelSource[]>([]);
+  const [channelSourceSelectedRow, setChannelSourceSelectedRows] = useState<API.ChannelSource[]>(
+    [],
+  );
   const columns: ProColumns<API.Channel>[] = [
     {
       title: <FormattedMessage id="pages.channel.table.list.logo" defaultMessage="台标" />,
@@ -228,18 +233,13 @@ const ChannelList: React.FC<{
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="操作" />,
       width: 80,
       valueType: 'option',
-      render: (_, record) => [
-        <Button
-          key="del-button"
-          danger
-          type="link"
-          onClick={() => {
+      render: (_, record) => (
+        <PopConfirmDel
+          onConfirmDel={() => {
             handleRemoveChannel([record]);
           }}
-        >
-          <FormattedMessage id="pages.dashboard.setting.deletedButton" defaultMessage="删除" />
-        </Button>,
-      ],
+        />
+      ),
     },
   ];
 
@@ -332,6 +332,7 @@ const ChannelList: React.FC<{
         visible={createDrawerVisible}
         onVisibleChange={setCreateDrawerVisible}
         onFinish={async (value: API.Channel) => {
+          console.log('channelForm>>>', channelForm);
           let success;
           if (value.id) {
             console.log('update');
@@ -355,21 +356,6 @@ const ChannelList: React.FC<{
           }
         }}
       >
-        <ProFormField>
-          <Button
-            type="primary"
-            onClick={() => {
-              setCreateChannelSourceVisible(true);
-            }}
-            key="addBtn"
-          >
-            {intl.formatMessage({
-              id: 'pages.searchTable.add.sourceAdd',
-              defaultMessage: '资源新增',
-            })}
-          </Button>
-          ,
-        </ProFormField>
         <ProFormText
           name="title"
           label={intl.formatMessage({
@@ -392,7 +378,58 @@ const ChannelList: React.FC<{
             defaultMessage: '直播播放地址',
           })}
         >
-          <ProFormText name="item" />
+          {(f, index, action) => {
+            return (
+              <>
+                <div
+                  style={{
+                    display: 'flex',
+                  }}
+                >
+                  <ProFormText initialValue={index} name="item" />
+                  <Button
+                    style={{
+                      marginLeft: '10px',
+                      marginTop: '2px',
+                    }}
+                    size="small"
+                    type="primary"
+                    key="set-channel-source"
+                    onClick={() => {
+                      setCreateChannelSourceVisible(true);
+                      setChannelSourceSelectedRows([]);
+                      cacheCallbacks = (channelSource: API.ChannelSource[]) => {
+                        if (Array.isArray(channelSource)) {
+                          if (channelSource.length > 1) {
+                            channelSource.forEach((rowData, channelIndex) => {
+                              if (channelIndex === 0) {
+                                action.setCurrentRowData({
+                                  item: channelSource[0].playUrl,
+                                });
+                              } else {
+                                action.add({
+                                  item: rowData.playUrl,
+                                });
+                              }
+                            });
+                          } else {
+                            action.setCurrentRowData({
+                              item: channelSource[0].playUrl,
+                            });
+                          }
+                        }
+                      };
+                    }}
+                  >
+                    {intl.formatMessage({
+                      id: 'pages.searchTable.add.sourceAdd',
+                      defaultMessage: '选择频道源',
+                    })}
+                  </Button>
+                </div>
+              </>
+            );
+          }}
         </ProFormList>
         <ProFormUploadDragger
           fieldProps={{
@@ -463,42 +500,35 @@ const ChannelList: React.FC<{
 
       <DrawerForm
         title={
-          <FormattedMessage id="pages.channel.table.list.chosenChannel" defaultMessage="选择频道" />
+          <FormattedMessage
+            id="pages.channel.table.list.chosenChannel"
+            defaultMessage="所有频道源"
+          />
         }
-        form={channelForm}
         width="30%"
         visible={createChannelSourceVisible}
         onVisibleChange={setCreateChannelSourceVisible}
-        onFinish={async (value: API.ChannelSource) => {
-          let success;
-          if (value.id) {
-            console.log('update');
-          } else {
-            const { title } = value;
-            if (title) {
-              success = await handleAddChannel({
-                title,
-                playSources: [],
-                channelId: '',
-                playbills: playBillList,
-              });
-            }
-          }
-          if (success) {
+        onFinish={async () => {
+          if (channelSourceSelectedRow.length > 0) {
             setCreateChannelSourceVisible(false);
-            if (actionRef.current) {
-              actionRef.current.reload();
+            if (cacheCallbacks) {
+              cacheCallbacks(channelSourceSelectedRow);
+            }
+
+            if (actionChannelSourceRef.current) {
+              actionChannelSourceRef.current.reload();
             }
           }
         }}
       >
         <ProTable
-          rowKey="title"
+          actionRef={actionChannelSourceRef}
+          rowKey="id"
           request={getChannelSource}
           size="small"
           rowSelection={{
             onChange: (_, selectedRows) => {
-              setSelectedRows(selectedRows);
+              setChannelSourceSelectedRows(selectedRows);
             },
           }}
           columns={[
@@ -516,29 +546,26 @@ const ChannelList: React.FC<{
                 '-1': {
                   text: (
                     <FormattedMessage
-                      id="pages.searchTable.nameStatus.yes"
-                      defaultMessage="Shut down"
+                      id="pages.searchTable.nameStatus.default"
+                      defaultMessage="未刷新"
                     />
                   ),
-                  status: 0,
-                },
-                '1': {
-                  text: (
-                    <FormattedMessage
-                      id="pages.searchTable.nameStatus.no"
-                      defaultMessage="Running"
-                    />
-                  ),
-                  status: 1,
+                  status: '-1',
                 },
                 '0': {
                   text: (
                     <FormattedMessage
                       id="pages.searchTable.nameStatus.no"
-                      defaultMessage="Running"
+                      defaultMessage="不可用"
                     />
                   ),
-                  status: 1,
+                  status: '0',
+                },
+                '1': {
+                  text: (
+                    <FormattedMessage id="pages.searchTable.nameStatus.yes" defaultMessage="可用" />
+                  ),
+                  status: '1',
                 },
               },
             },

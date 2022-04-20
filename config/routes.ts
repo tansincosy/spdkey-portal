@@ -34,7 +34,7 @@ export default [
       {
         path: '/epg/channel',
         name: 'channel',
-        component: './live/List',
+        component: './live/channel',
       },
     ],
   },

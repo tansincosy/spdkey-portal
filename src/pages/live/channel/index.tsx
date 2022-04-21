@@ -13,12 +13,14 @@ import {
   removePlaybill,
   addChannel,
   getChannelSource,
+  getChannelSourceProgram,
 } from '@/services';
 import { FormattedMessage, useIntl } from 'umi';
 import { DrawerForm, ProFormList, ProFormText, ProFormUploadDragger } from '@ant-design/pro-form';
 import XLSX from 'xlsx';
 import PopConfirmDel from '@/components/Popconfirm';
 let cacheCallbacks: any;
+
 //TODO：选择频道问题  状态不能文字展示，选择节目单时，匹配节目url 节目单channelID
 /**
  * {
@@ -213,6 +215,8 @@ const ChannelList: React.FC<{
   const [channelSourceSelectedRow, setChannelSourceSelectedRows] = useState<API.ChannelSource[]>(
     [],
   );
+
+  const [playbillChosenVisible, setPlaybillChosenVisible] = useState<boolean>(false);
   const columns: ProColumns<API.Channel>[] = [
     {
       title: <FormattedMessage id="pages.channel.table.list.logo" defaultMessage="台标" />,
@@ -364,13 +368,6 @@ const ChannelList: React.FC<{
           })}
         />
 
-        <ProFormText
-          name="channelId"
-          label={intl.formatMessage({
-            id: 'pages.channel.table.list.channelId',
-            defaultMessage: '频道NO.',
-          })}
-        />
         <ProFormList
           name="playSources"
           label={intl.formatMessage({
@@ -462,7 +459,31 @@ const ChannelList: React.FC<{
           }}
           {...uploadProps}
           max={1}
-          label="导入节目单"
+          label={
+            <>
+              {intl.formatMessage({
+                id: 'pages.searchTable.import-program',
+                defaultMessage: '导入节目单',
+              })}
+              <Button
+                onClick={() => {
+                  setPlaybillChosenVisible(true);
+                }}
+                size="small"
+                type="primary"
+                style={{
+                  marginLeft: 10,
+                }}
+              >
+                {
+                  <FormattedMessage
+                    id="pages.channel.form.chosen-program"
+                    defaultMessage="从源选择节目单"
+                  />
+                }
+              </Button>
+            </>
+          }
         />
         <ProTable
           options={false}
@@ -511,6 +532,82 @@ const ChannelList: React.FC<{
         onFinish={async () => {
           if (channelSourceSelectedRow.length > 0) {
             setCreateChannelSourceVisible(false);
+          }
+        }}
+      >
+        <ProTable
+          rowKey="id"
+          request={getChannelSourceProgram}
+          size="small"
+          rowSelection={{
+            onChange: (_, selectedRows) => {
+              setChannelSourceSelectedRows(selectedRows);
+            },
+          }}
+          columns={[
+            {
+              dataIndex: 'title',
+              title: (
+                <FormattedMessage id="pages.searchTable.channelName" defaultMessage="频道名" />
+              ),
+            },
+            {
+              title: <FormattedMessage id="pages.searchTable.status" defaultMessage="状态" />,
+              dataIndex: 'status',
+              hideInForm: true,
+              valueEnum: {
+                '-1': {
+                  text: (
+                    <FormattedMessage
+                      id="pages.searchTable.nameStatus.default"
+                      defaultMessage="未刷新"
+                    />
+                  ),
+                  status: '-1',
+                },
+                '0': {
+                  text: (
+                    <FormattedMessage
+                      id="pages.searchTable.nameStatus.no"
+                      defaultMessage="不可用"
+                    />
+                  ),
+                  status: '0',
+                },
+                '1': {
+                  text: (
+                    <FormattedMessage id="pages.searchTable.nameStatus.yes" defaultMessage="可用" />
+                  ),
+                  status: '1',
+                },
+              },
+            },
+            {
+              search: false,
+              title: (
+                <FormattedMessage id="pages.searchTable.updatedAt" defaultMessage="更新时间" />
+              ),
+              dataIndex: 'updatedAt',
+              valueType: 'dateTime',
+              hideInForm: true,
+            },
+          ]}
+        />
+      </DrawerForm>
+
+      <DrawerForm
+        title={
+          <FormattedMessage
+            id="pages.channel.table.list.chosenChannel"
+            defaultMessage="所有频道源"
+          />
+        }
+        width="30%"
+        visible={playbillChosenVisible}
+        onVisibleChange={setPlaybillChosenVisible}
+        onFinish={async () => {
+          if (channelSourceSelectedRow.length > 0) {
+            setPlaybillChosenVisible(false);
             if (cacheCallbacks) {
               cacheCallbacks(channelSourceSelectedRow);
             }

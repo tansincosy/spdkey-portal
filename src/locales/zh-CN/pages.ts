@@ -119,4 +119,6 @@ export default {
   'pages.channel.form.del.is-del': '是否确认删除？',
   'pages.searchTable.nameStatus.yes': '可用',
   'pages.searchTable.nameStatus.no': '不可用',
+  'pages.searchTable.import-program': '导入节目单',
+  'pages.channel.form.chosen-program': '从源中选择节目单',
 };

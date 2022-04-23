@@ -90,6 +90,29 @@ export async function getChannelSource(
   });
 }
 
+export async function getChannelSourceProgram(
+  params: {
+    current?: number;
+    pageSize?: number;
+  },
+  options?: Record<string, any>,
+) {
+  return request<API.ChannelSource[]>('/api/epg-xml/program-channel', {
+    method: 'GET',
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  });
+}
+
+export async function beginParseEpgXml(options?: Record<string, any>) {
+  return request<Record<string, any>>('/api/epg-xml/xml-parse', {
+    method: 'POST',
+    ...(options || {}),
+  });
+}
+
 export async function getChannelSourcesInfo(params: { id: string }) {
   return request<API.ChannelSource>('/api/channel/source', {
     method: 'GET',

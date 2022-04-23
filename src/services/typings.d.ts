@@ -116,4 +116,17 @@ declare namespace API {
     language?: string;
     playUrl?: string;
   };
+
+  type AllowChannelSource = {
+    id?: string;
+    updatedAt?: string;
+    epgXmlId?: string;
+    channelId?: string;
+    createdAt?: string;
+    title?: string;
+    images?: { href?: string; type?: string }[];
+    country?: string;
+    language?: string;
+    playUrl?: string;
+  };
 }

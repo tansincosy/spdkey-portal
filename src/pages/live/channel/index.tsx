@@ -12,14 +12,13 @@ import {
   removeChannel,
   removePlaybill,
   addChannel,
-  getChannelSource,
+  beginParseEpgXml,
   getChannelSourceProgram,
+  getChannelSource,
 } from '@/services';
 import { FormattedMessage, useIntl } from 'umi';
-import { DrawerForm, ProFormList, ProFormText, ProFormUploadDragger } from '@ant-design/pro-form';
-import XLSX from 'xlsx';
+import { DrawerForm, ProFormSelect, ProFormText } from '@ant-design/pro-form';
 import PopConfirmDel from '@/components/Popconfirm';
-let cacheCallbacks: any;
 
 //TODO：选择频道问题  状态不能文字展示，选择节目单时，匹配节目url 节目单channelID
 /**
@@ -209,14 +208,7 @@ const ChannelList: React.FC<{
   const [createDrawerVisible, setCreateDrawerVisible] = useState<boolean>(false);
   const [playBillList, setPlayBillList] = useState<API.PlayBill[]>([]);
   const actionRef = useRef<ActionType>();
-  const actionChannelSourceRef = useRef<ActionType>();
   const intl = useIntl();
-  const [createChannelSourceVisible, setCreateChannelSourceVisible] = useState<boolean>(false);
-  const [channelSourceSelectedRow, setChannelSourceSelectedRows] = useState<API.ChannelSource[]>(
-    [],
-  );
-
-  const [playbillChosenVisible, setPlaybillChosenVisible] = useState<boolean>(false);
   const columns: ProColumns<API.Channel>[] = [
     {
       title: <FormattedMessage id="pages.channel.table.list.logo" defaultMessage="台标" />,
@@ -247,34 +239,32 @@ const ChannelList: React.FC<{
     },
   ];
 
-  //[channel -> inputPG ]
+  /**
+   * 解析xml 文件
+   * @returns
+   */
+  const beginEPGXmlParse = async () => {
+    const { xmlReadyParseUrl } = (await channelForm.getFieldsValue()) || {};
 
-  // new PG
-  //edit program data
-  //edit channel data
+    if (!xmlReadyParseUrl) {
+      message.warning(
+        intl.formatMessage({
+          id: 'pages.channel.table.list.noXmlUrl',
+          defaultMessage: '没有填写xml地址,请填写',
+        }),
+      );
+      return;
+    }
+    await beginParseEpgXml({
+      parseUrl: xmlReadyParseUrl,
+    });
 
-  const importToJson = (jsonArray: any) => {
-    const resultJson = jsonArray
-      .filter((item: any | null) => item)
-      .map((objArr: any, index: number) => {
-        if (index !== 0) {
-          const [title, chanId, startTime, endTime] = objArr;
-          return {
-            title,
-            channelId: chanId,
-            startTime: startTime,
-            endTime: endTime,
-          };
-        }
-      });
-    setPlayBillList(resultJson);
-  };
-
-  const uploadProps = {
-    // 这里我们只接受excel2007以后版本的文件，accept就是指定文件选择框的文件类型
-    accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    name: 'file',
-    showUploadList: false,
+    message.success(
+      intl.formatMessage({
+        id: 'pages.channel.table.list.parseSuccess',
+        defaultMessage: '解析成功',
+      }),
+    );
   };
 
   return (
@@ -367,315 +357,51 @@ const ChannelList: React.FC<{
             defaultMessage: '频道名',
           })}
         />
-
-        <ProFormList
+        <ProFormSelect
           name="playSources"
+          mode="multiple"
+          allowClear
+          request={getChannelSource}
           label={intl.formatMessage({
             id: 'pages.channel.table.list.channel-url',
             defaultMessage: '直播播放地址',
           })}
-        >
-          {(f, index, action) => {
-            return (
-              <>
-                <div
-                  style={{
-                    display: 'flex',
-                  }}
-                >
-                  <ProFormText initialValue={index} name="item" />
-                  <Button
-                    style={{
-                      marginLeft: '10px',
-                      marginTop: '2px',
-                    }}
-                    size="small"
-                    type="primary"
-                    key="set-channel-source"
-                    onClick={() => {
-                      setCreateChannelSourceVisible(true);
-                      setChannelSourceSelectedRows([]);
-                      cacheCallbacks = (channelSource: API.ChannelSource[]) => {
-                        if (Array.isArray(channelSource)) {
-                          if (channelSource.length > 1) {
-                            channelSource.forEach((rowData, channelIndex) => {
-                              if (channelIndex === 0) {
-                                action.setCurrentRowData({
-                                  item: channelSource[0].playUrl,
-                                });
-                              } else {
-                                action.add({
-                                  item: rowData.playUrl,
-                                });
-                              }
-                            });
-                          } else {
-                            action.setCurrentRowData({
-                              item: channelSource[0].playUrl,
-                            });
-                          }
-                        }
-                      };
-                    }}
-                  >
-                    {intl.formatMessage({
-                      id: 'pages.searchTable.add.sourceAdd',
-                      defaultMessage: '选择频道源',
-                    })}
-                  </Button>
-                </div>
-              </>
-            );
-          }}
-        </ProFormList>
-        <ProFormUploadDragger
-          fieldProps={{
-            onRemove() {
-              setPlayBillList([]);
-            },
-            beforeUpload: (file) => {
-              const rABS = true;
-              if (!file) {
-                return;
-              }
-              const fileReader = new FileReader();
-              fileReader.onload = function (e: any) {
-                let data = e?.target.result;
-                if (!rABS) data = new Uint8Array(data);
-                const workbook = XLSX.read(data, {
-                  type: rABS ? 'binary' : 'array',
-                });
-                // 假设我们的数据在第一个标签
-                const first_worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                // XLSX自带了一个工具把导入的数据转成json
-                const jsonArr = XLSX.utils.sheet_to_json(first_worksheet, { header: 1 });
-                importToJson(jsonArr);
-              };
-              if (rABS) {
-                fileReader.readAsBinaryString(file);
-              }
-              return false;
-            },
-          }}
-          {...uploadProps}
-          max={1}
-          label={
-            <>
+          placeholder={intl.formatMessage({
+            id: 'pages.channel.table.list.channel-url',
+            defaultMessage: '直播播放地址',
+          })}
+        />
+        <ProFormText
+          addonAfter={
+            <Button onClick={beginEPGXmlParse} type="primary" size="small">
               {intl.formatMessage({
-                id: 'pages.searchTable.import-program',
-                defaultMessage: '导入节目单',
+                id: 'pages.channel.add.form.label.xml-button',
+                defaultMessage: '开始解析',
               })}
-              <Button
-                onClick={() => {
-                  setPlaybillChosenVisible(true);
-                }}
-                size="small"
-                type="primary"
-                style={{
-                  marginLeft: 10,
-                }}
-              >
-                {
-                  <FormattedMessage
-                    id="pages.channel.form.chosen-program"
-                    defaultMessage="从源选择节目单"
-                  />
-                }
-              </Button>
-            </>
+            </Button>
           }
+          name="xmlReadyParseUrl"
+          label={intl.formatMessage({
+            id: 'pages.channel.add.form.label.xml-name',
+            defaultMessage: '填写xml地址',
+          })}
         />
-        <ProTable
-          options={false}
-          search={false}
-          rowKey="startTime"
-          dataSource={playBillList}
-          size="small"
-          pagination={false}
-          title={() => '节目单列表'}
-          columns={[
-            {
-              dataIndex: 'title',
-              title: (
-                <FormattedMessage id="pages.channel.table.list.playbill" defaultMessage="节目单" />
-              ),
-            },
-            {
-              dataIndex: 'startTime',
-              title: (
-                <FormattedMessage
-                  id="pages.channel.table.list.starttime"
-                  defaultMessage="开始时间"
-                />
-              ),
-            },
-            {
-              dataIndex: 'endTime',
-              title: (
-                <FormattedMessage id="pages.channel.table.list.endtime" defaultMessage="结束时间" />
-              ),
-            },
-          ]}
-        />
-      </DrawerForm>
-
-      <DrawerForm
-        title={
-          <FormattedMessage
-            id="pages.channel.table.list.chosenChannel"
-            defaultMessage="所有频道源"
-          />
-        }
-        width="30%"
-        visible={createChannelSourceVisible}
-        onVisibleChange={setCreateChannelSourceVisible}
-        onFinish={async () => {
-          if (channelSourceSelectedRow.length > 0) {
-            setCreateChannelSourceVisible(false);
-          }
-        }}
-      >
-        <ProTable
-          rowKey="id"
+        <ProFormSelect
+          name="channelProgram"
+          showSearch
+          allowClear
           request={getChannelSourceProgram}
-          size="small"
-          rowSelection={{
-            onChange: (_, selectedRows) => {
-              setChannelSourceSelectedRows(selectedRows);
-            },
-          }}
-          columns={[
-            {
-              dataIndex: 'title',
-              title: (
-                <FormattedMessage id="pages.searchTable.channelName" defaultMessage="频道名" />
-              ),
-            },
-            {
-              title: <FormattedMessage id="pages.searchTable.status" defaultMessage="状态" />,
-              dataIndex: 'status',
-              hideInForm: true,
-              valueEnum: {
-                '-1': {
-                  text: (
-                    <FormattedMessage
-                      id="pages.searchTable.nameStatus.default"
-                      defaultMessage="未刷新"
-                    />
-                  ),
-                  status: '-1',
-                },
-                '0': {
-                  text: (
-                    <FormattedMessage
-                      id="pages.searchTable.nameStatus.no"
-                      defaultMessage="不可用"
-                    />
-                  ),
-                  status: '0',
-                },
-                '1': {
-                  text: (
-                    <FormattedMessage id="pages.searchTable.nameStatus.yes" defaultMessage="可用" />
-                  ),
-                  status: '1',
-                },
-              },
-            },
-            {
-              search: false,
-              title: (
-                <FormattedMessage id="pages.searchTable.updatedAt" defaultMessage="更新时间" />
-              ),
-              dataIndex: 'updatedAt',
-              valueType: 'dateTime',
-              hideInForm: true,
-            },
-          ]}
-        />
-      </DrawerForm>
-
-      <DrawerForm
-        title={
-          <FormattedMessage
-            id="pages.channel.table.list.chosenChannel"
-            defaultMessage="所有频道源"
-          />
-        }
-        width="30%"
-        visible={playbillChosenVisible}
-        onVisibleChange={setPlaybillChosenVisible}
-        onFinish={async () => {
-          if (channelSourceSelectedRow.length > 0) {
-            setPlaybillChosenVisible(false);
-            if (cacheCallbacks) {
-              cacheCallbacks(channelSourceSelectedRow);
-            }
-
-            if (actionChannelSourceRef.current) {
-              actionChannelSourceRef.current.reload();
-            }
+          label={
+            <FormattedMessage
+              id="pages.channel.form.chosen-program"
+              defaultMessage="从源中选择节目单"
+            />
           }
-        }}
-      >
-        <ProTable
-          actionRef={actionChannelSourceRef}
-          rowKey="id"
-          request={getChannelSource}
-          size="small"
-          rowSelection={{
-            onChange: (_, selectedRows) => {
-              setChannelSourceSelectedRows(selectedRows);
-            },
-          }}
-          columns={[
-            {
-              dataIndex: 'title',
-              title: (
-                <FormattedMessage id="pages.searchTable.channelName" defaultMessage="频道名" />
-              ),
-            },
-            {
-              title: <FormattedMessage id="pages.searchTable.status" defaultMessage="状态" />,
-              dataIndex: 'status',
-              hideInForm: true,
-              valueEnum: {
-                '-1': {
-                  text: (
-                    <FormattedMessage
-                      id="pages.searchTable.nameStatus.default"
-                      defaultMessage="未刷新"
-                    />
-                  ),
-                  status: '-1',
-                },
-                '0': {
-                  text: (
-                    <FormattedMessage
-                      id="pages.searchTable.nameStatus.no"
-                      defaultMessage="不可用"
-                    />
-                  ),
-                  status: '0',
-                },
-                '1': {
-                  text: (
-                    <FormattedMessage id="pages.searchTable.nameStatus.yes" defaultMessage="可用" />
-                  ),
-                  status: '1',
-                },
-              },
-            },
-            {
-              search: false,
-              title: (
-                <FormattedMessage id="pages.searchTable.updatedAt" defaultMessage="更新时间" />
-              ),
-              dataIndex: 'updatedAt',
-              valueType: 'dateTime',
-              hideInForm: true,
-            },
-          ]}
+          placeholder={intl.formatMessage({
+            id: 'pages.channel.form.chosen-program',
+            defaultMessage: '从源中选择节目单',
+          })}
+          rules={[{ required: true, message: 'Please select your country!' }]}
         />
       </DrawerForm>
     </>

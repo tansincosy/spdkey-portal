@@ -6,6 +6,10 @@ export default {
   'GET /api/channel/source/test': async (req: Request, res: Response) => {
     return res.json({});
   },
+  //xml 解析
+  'POST /api/epg-xml/xml-parse': async (req: Request, res: Response) => {
+    return res.json({});
+  },
   //EPG.xml中的频道列表
   'GET /api/epg-xml/program-channel': async (req: Request, res: Response) => {
     const { current = 1, pageSize = 10, id } = req.query;
@@ -23,6 +27,7 @@ export default {
           title: '@name',
           language: '@title(2,4)',
           'status|1': ['1', '0', '-1'],
+          epgXmlId: '@guid',
           updatedAt: '@datetime(T)',
           createdAt: '@datetime(T)',
         },

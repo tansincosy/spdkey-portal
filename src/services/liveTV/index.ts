@@ -81,7 +81,7 @@ export async function getChannelSource(
   },
   options?: Record<string, any>,
 ) {
-  return request<API.ChannelSource[]>('/api/channel/source', {
+  return request<API.Pagination<API.ChannelSource[]>>('/api/channel/source', {
     method: 'GET',
     params: {
       ...params,
@@ -97,7 +97,7 @@ export async function getChannelSourceProgram(
   },
   options?: Record<string, any>,
 ) {
-  return request<API.ChannelSource[]>('/api/epg-xml/program-channel', {
+  return request<API.Pagination<API.AllowChannelSource[]>>('/api/epg-xml/program-channel', {
     method: 'GET',
     params: {
       ...params,

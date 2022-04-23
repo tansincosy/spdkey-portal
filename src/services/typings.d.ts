@@ -55,8 +55,8 @@ declare namespace API {
     updatedAt?: string;
     createdAt?: string;
     title?: string;
+    programSourceId?: string;
     playSources?: string[];
-    channelId?: string;
     playbills?: PlayBill[];
     images?: { href?: string; type?: string }[];
   };
@@ -90,6 +90,7 @@ declare namespace API {
     playSources?: string[];
     channelId?: string;
     playbills?: PlayBill[];
+    programSourceId?: string;
     images?: { href?: string; type?: string }[];
   };
 
@@ -101,6 +102,7 @@ declare namespace API {
     channelId?: string;
     startTime?: string;
     endTime?: string;
+    programSourceId?: string;
     images: { href?: string; type?: string }[];
   };
 
@@ -109,8 +111,6 @@ declare namespace API {
     updatedAt?: string;
     createdAt?: string;
     title?: string;
-    startTime?: string;
-    endTime?: string;
     images?: { href?: string; type?: string }[];
     country?: string;
     language?: string;
@@ -127,6 +127,18 @@ declare namespace API {
     images?: { href?: string; type?: string }[];
     country?: string;
     language?: string;
-    playUrl?: string;
   };
+
+  interface Pagination<T> {
+    pageNumber: number;
+    pageSize: number;
+    data: T;
+    total: number;
+  }
+
+  interface LabelOptions {
+    label: string;
+    value: string;
+    id: string;
+  }
 }

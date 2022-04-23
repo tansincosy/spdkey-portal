@@ -1,24 +1,24 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Button, Form, Image, message } from 'antd';
+import React, { useRef, useState } from 'react';
+import { Button, Form, Image, message, Select } from 'antd';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import ProCard from '@ant-design/pro-card';
 // @ts-ignore
 import styles from './split.less';
-import { FooterToolbar, PageContainer } from '@ant-design/pro-layout';
+import { PageContainer } from '@ant-design/pro-layout';
 import {
   getChannels,
-  getPlaybill,
   removeChannel,
-  removePlaybill,
   addChannel,
   beginParseEpgXml,
   getChannelSourceProgram,
   getChannelSource,
 } from '@/services';
 import { FormattedMessage, useIntl } from 'umi';
-import { DrawerForm, ProFormSelect, ProFormText } from '@ant-design/pro-form';
+import { DrawerForm, ProFormText } from '@ant-design/pro-form';
 import PopConfirmDel from '@/components/Popconfirm';
+import { useDebounceFn } from 'ahooks';
+import { PlaybillList } from '../components/Porgram';
 
 //TODO：选择频道问题  状态不能文字展示，选择节目单时，匹配节目url 节目单channelID
 /**
@@ -31,25 +31,6 @@ import PopConfirmDel from '@/components/Popconfirm';
  * @param selectedRows
  * @returns
  */
-
-const handleRemove = async (selectedRows: API.PlayBill[]) => {
-  const hide = message.loading('正在删除');
-  if (!selectedRows) return true;
-  try {
-    await removePlaybill({
-      data: {
-        ids: selectedRows.map((row) => row.id),
-      },
-    });
-    hide();
-    message.success('删除成功');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('删除失败，请重试');
-    return false;
-  }
-};
 
 const handleAddChannel = async (fields: API.Channel) => {
   const hide = message.loading('正在添加');
@@ -88,127 +69,15 @@ const handleRemoveChannel = async (selectedRows: API.Channel[]) => {
   }
 };
 
-const PlaybillList: React.FC<{ channelId?: string }> = (props) => {
-  const { channelId } = props;
-  const [tableListDataSource, setTableListDataSource] = useState<API.PlayBill[]>([]);
-  const [selectedRowsState, setSelectedRows] = useState<API.PlayBill[]>([]);
-  const actionRef = useRef<ActionType>();
-
-  const columns: ProColumns<API.PlayBill>[] = [
-    {
-      title: <FormattedMessage id="pages.channel.table.list.playbill" defaultMessage="节目单" />,
-      dataIndex: 'title',
-    },
-    {
-      title: <FormattedMessage id="pages.channel.table.list.starttime" defaultMessage="开始时间" />,
-      dataIndex: 'startTime',
-      valueType: 'dateTime',
-    },
-    {
-      title: <FormattedMessage id="pages.channel.table.list.endtime" defaultMessage="结束时间" />,
-      dataIndex: 'endTime',
-      valueType: 'dateTime',
-    },
-    {
-      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="操作" />,
-      width: 80,
-      valueType: 'option',
-      render: (_, record) => (
-        <PopConfirmDel
-          onConfirmDel={() => {
-            handleRemove([record]);
-          }}
-        />
-      ),
-    },
-  ];
-
-  useEffect(() => {
-    getPlaybillData({ current: 1, pageSize: 10, channelId });
-  }, [channelId]);
-
-  async function getPlaybillData(params: any) {
-    const data = (await getPlaybill(params)) as any;
-    if (data.data) {
-      setTableListDataSource(data.data);
-    }
-    return data;
-  }
-
-  return (
-    <>
-      <ProTable<API.PlayBill, API.PageParams>
-        columns={columns}
-        dataSource={tableListDataSource}
-        rowKey="id"
-        search={false}
-        actionRef={actionRef}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
-        toolbar={{
-          actions: [
-            <Button key="list" type="primary" onClick={() => {}}>
-              <FormattedMessage
-                id="pages.channel.table.list.addPlaybillButton"
-                defaultMessage="新建节目单"
-              />
-            </Button>,
-          ],
-        }}
-        request={(params) =>
-          getPlaybillData({ current: params?.current, pageSize: params?.pageSize, channelId })
-        }
-      />
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-              <span>
-                <FormattedMessage
-                  id="pages.searchTable.totalServiceCalls"
-                  defaultMessage="Total number of service calls"
-                />{' '}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
-              </span>
-            </div>
-          }
-        >
-          <Button
-            danger
-            onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
-            }}
-          >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-        </FooterToolbar>
-      )}
-    </>
-  );
-};
-
 const ChannelList: React.FC<{
-  channelId?: string;
+  id?: string;
   onChange: (channel: API.Channel) => void;
-}> = (props) => {
-  const { onChange, channelId } = props;
+}> = ({ onChange, id }) => {
   const [channelForm] = Form.useForm();
   const [createDrawerVisible, setCreateDrawerVisible] = useState<boolean>(false);
-  const [playBillList, setPlayBillList] = useState<API.PlayBill[]>([]);
   const actionRef = useRef<ActionType>();
   const intl = useIntl();
+
   const columns: ProColumns<API.Channel>[] = [
     {
       title: <FormattedMessage id="pages.channel.table.list.logo" defaultMessage="台标" />,
@@ -216,14 +85,24 @@ const ChannelList: React.FC<{
       render(dataRow: any) {
         return <Image width={75} height={30} src={dataRow[0]?.href} />;
       },
+      search: false,
     },
     {
       title: <FormattedMessage id="pages.channel.table.list.titleKey" defaultMessage="频道名" />,
       dataIndex: 'title',
-    },
-    {
-      title: <FormattedMessage id="pages.channel.table.list.channelId" defaultMessage="频道ID" />,
-      dataIndex: 'channelId',
+      render: (dom, entity) => {
+        return (
+          <a
+            onClick={() => {
+              if (entity.id) {
+                onChange(entity);
+              }
+            }}
+          >
+            {dom}
+          </a>
+        );
+      },
     },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="操作" />,
@@ -267,6 +146,90 @@ const ChannelList: React.FC<{
     );
   };
 
+  const channelSourceProgramsPageNumber = useRef<number>(1);
+  const [channelSourceProgramsOptions, setChannelSourceProgramsOptions] = useState<
+    API.AllowChannelSource[]
+  >([]);
+
+  const loadChannelSourcesProgram = async (current: number) => {
+    const { data } = await getChannelSourceProgram({ current, pageSize: 200 });
+    channelSourceProgramsPageNumber.current = current;
+    setChannelSourceProgramsOptions((oldOptions) => {
+      return [...oldOptions, ...data];
+    });
+  };
+
+  const onPopupScrollForChannelSourceProgram = async (e: any) => {
+    const {
+      target: { scrollTop, offsetHeight, scrollHeight },
+    } = e;
+    if (scrollTop + offsetHeight >= scrollHeight) {
+      await loadChannelSourcesProgram(channelSourceProgramsPageNumber.current + 1);
+    }
+  };
+
+  const channelSourcePageNumber = useRef<number>(1);
+  const [channelSourceOptions, setChannelSourceOptions] = useState<API.ChannelSource[]>([]);
+
+  const loadChannelSources = async (current: number) => {
+    const { data } = await getChannelSource({ current, pageSize: 200 });
+    channelSourcePageNumber.current = current;
+    setChannelSourceOptions((oldOptions) => {
+      return [...oldOptions, ...data];
+    });
+  };
+
+  const onPopupScroll = async (e: any) => {
+    const {
+      target: { scrollTop, offsetHeight, scrollHeight },
+    } = e;
+    if (scrollTop + offsetHeight >= scrollHeight) {
+      await loadChannelSources(channelSourcePageNumber.current + 1);
+    }
+  };
+
+  const onPlaySourceSearch = useDebounceFn(
+    async (value: string) => {
+      if (value) {
+        const { data } = await getChannelSource(
+          {},
+          {
+            params: {
+              title: value,
+            },
+          },
+        );
+        if (Array.isArray(data) && data.length > 0) {
+          setChannelSourceOptions(data);
+        }
+      }
+    },
+    {
+      wait: 1000,
+    },
+  );
+
+  const onPlaySourceProgramSearch = useDebounceFn(
+    async (value: string) => {
+      if (value) {
+        const { data } = await getChannelSourceProgram(
+          {},
+          {
+            params: {
+              title: value,
+            },
+          },
+        );
+        if (Array.isArray(data) && data.length > 0) {
+          setChannelSourceProgramsOptions(data);
+        }
+      }
+    },
+    {
+      wait: 1000,
+    },
+  );
+
   return (
     <>
       <ProTable<API.Channel, API.PageParams>
@@ -275,20 +238,14 @@ const ChannelList: React.FC<{
         request={getChannels}
         rowKey="id"
         rowClassName={(record) => {
-          return record.channelId === channelId ? styles['split-row-select-active'] : '';
+          return record.id === id ? styles['split-row-select-active'] : '';
         }}
         toolbar={{
-          search: {
-            onSearch: (value) => {
-              alert(value);
-            },
-          },
           actions: [
             <Button
               key="list"
               type="primary"
               onClick={() => {
-                setPlayBillList([]);
                 channelForm.resetFields();
                 setCreateDrawerVisible(true);
               }}
@@ -301,19 +258,17 @@ const ChannelList: React.FC<{
           ],
         }}
         options={false}
-        search={false}
         onRow={(record) => {
           return {
             onClick: () => {
               if (record) {
-                onChange(record);
               }
             },
           };
         }}
       />
 
-      <DrawerForm
+      <DrawerForm<API.Channel>
         title={[
           <FormattedMessage
             key="title"
@@ -326,7 +281,7 @@ const ChannelList: React.FC<{
         visible={createDrawerVisible}
         onVisibleChange={setCreateDrawerVisible}
         onFinish={async (value: API.Channel) => {
-          console.log('channelForm>>>', channelForm);
+          console.log('channelForm>>>', channelForm.getFieldsValue());
           let success;
           if (value.id) {
             console.log('update');
@@ -335,10 +290,9 @@ const ChannelList: React.FC<{
             if (title) {
               success = await handleAddChannel({
                 title,
+                programSourceId: value.programSourceId,
                 playSources:
                   (value.playSources && value.playSources.map((item: any) => item.item)) || [],
-                channelId: value.channelId,
-                playbills: playBillList,
               });
             }
           }
@@ -357,20 +311,40 @@ const ChannelList: React.FC<{
             defaultMessage: '频道名',
           })}
         />
-        <ProFormSelect
+        <Form.Item
           name="playSources"
-          mode="multiple"
-          allowClear
-          request={getChannelSource}
           label={intl.formatMessage({
             id: 'pages.channel.table.list.channel-url',
             defaultMessage: '直播播放地址',
           })}
-          placeholder={intl.formatMessage({
-            id: 'pages.channel.table.list.channel-url',
-            defaultMessage: '直播播放地址',
-          })}
-        />
+        >
+          <Select
+            onSearch={onPlaySourceSearch.run}
+            onClear={() => loadChannelSources(1)}
+            mode="multiple"
+            onPopupScroll={onPopupScroll}
+            onDropdownVisibleChange={() => loadChannelSources(1)}
+            showSearch
+            allowClear
+            filterOption={false}
+            defaultActiveFirstOption={false}
+            getPopupContainer={(triggerNode) => triggerNode.parentNode}
+            notFoundContent={null}
+            placeholder={intl.formatMessage({
+              id: 'pages.channel.table.list.channel-url',
+              defaultMessage: '直播播放地址',
+            })}
+          >
+            {channelSourceOptions.map((item: API.ChannelSource) => {
+              return (
+                <Select.Option key={item.id} value={item.playUrl}>
+                  {item.title}
+                </Select.Option>
+              );
+            })}
+          </Select>
+        </Form.Item>
+
         <ProFormText
           addonAfter={
             <Button onClick={beginEPGXmlParse} type="primary" size="small">
@@ -386,23 +360,36 @@ const ChannelList: React.FC<{
             defaultMessage: '填写xml地址',
           })}
         />
-        <ProFormSelect
-          name="channelProgram"
-          showSearch
-          allowClear
-          request={getChannelSourceProgram}
+
+        <Form.Item
+          name="programSourceId"
           label={
             <FormattedMessage
               id="pages.channel.form.chosen-program"
               defaultMessage="从源中选择节目单"
             />
           }
-          placeholder={intl.formatMessage({
-            id: 'pages.channel.form.chosen-program',
-            defaultMessage: '从源中选择节目单',
-          })}
-          rules={[{ required: true, message: 'Please select your country!' }]}
-        />
+        >
+          <Select
+            onPopupScroll={onPopupScrollForChannelSourceProgram}
+            allowClear
+            showSearch
+            filterOption={false}
+            defaultActiveFirstOption={false}
+            getPopupContainer={(triggerNode) => triggerNode.parentNode}
+            onSearch={onPlaySourceProgramSearch.run}
+            onClear={() => loadChannelSourcesProgram(1)}
+            onDropdownVisibleChange={() => loadChannelSourcesProgram(1)}
+            placeholder={intl.formatMessage({
+              id: 'pages.channel.form.chosen-program',
+              defaultMessage: '从源中选择节目单',
+            })}
+            options={channelSourceProgramsOptions.map((item: API.AllowChannelSource) => ({
+              label: item.title,
+              value: `${item.epgXmlId}:${item.channelId}`,
+            }))}
+          />
+        </Form.Item>
       </DrawerForm>
     </>
   );
@@ -415,10 +402,10 @@ const Channel: React.FC = () => {
     <PageContainer>
       <ProCard split="vertical">
         <ProCard colSpan="384px" ghost>
-          <ChannelList onChange={(chosenId) => setChannelItem(chosenId)} />
+          <ChannelList onChange={(chosenId) => setChannelItem(chosenId)} id={channelItem.id} />
         </ProCard>
         <ProCard title={channelItem.title}>
-          <PlaybillList channelId={channelItem.channelId} />
+          <PlaybillList programSourceId={channelItem.programSourceId} />
         </ProCard>
       </ProCard>
     </PageContainer>

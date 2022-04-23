@@ -53,15 +53,15 @@ export default [
         name: 'device-list',
         component: './settings/device/List',
       },
-      // {
-      //   path: '/settings/logs',
-      //   name: 'settings-logs',
-      //   component: './actionLogs/List',
-      // },
       {
         path: '/settings/config',
         name: 'settings-config',
         component: './settings/customConfig/List',
+      },
+      {
+        path: '/settings/operation-log',
+        name: 'settings-operation-log',
+        component: './operation-log',
       },
     ],
   },

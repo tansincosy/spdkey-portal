@@ -7,7 +7,7 @@ export default {
   'menu.setting.device-list': '设备',
   'menu.setting.settings-config': '配置',
   'menu.setting': '系统',
-  'menu.setting.settings-logs': '日志',
+  'menu.setting.settings-operation-log': '日志',
   'menu.admin.sub-page': '二级管理页',
   'menu.login': '登录',
   'menu.register': '注册',

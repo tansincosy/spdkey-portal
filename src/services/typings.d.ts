@@ -141,4 +141,12 @@ declare namespace API {
     value: string;
     id: string;
   }
+
+  type Log = {
+    id?: string;
+    message?: string;
+    timestamp?: number;
+    module?: string;
+    user?: string;
+  };
 }

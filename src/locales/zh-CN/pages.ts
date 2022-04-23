@@ -126,4 +126,5 @@ export default {
   'pages.channel.add.form.label.xml-button': '开始解析',
   'pages.channel.table.list.noXmlUrl': '没有填写xml地址,请填写',
   'pages.channel.table.list.parseSuccess': '解析成功,请从源中选择节目单',
+  'pages.log.message.module': '日志模块',
 };

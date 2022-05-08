@@ -114,7 +114,7 @@ export async function beginParseEpgXml(options?: Record<string, any>) {
 }
 
 export async function getChannelSourcesInfo(params: { id: string }) {
-  return request<API.ChannelSource>('/api/channel/source', {
+  return request<API.Pagination<API.AllowChannelSource[]>>('/api/channel/source', {
     method: 'GET',
     params: {
       ...params,

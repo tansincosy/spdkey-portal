@@ -32,7 +32,7 @@ const ChannelList: React.FC = () => {
     const channelSourceInfo = await getChannelSourcesInfo({
       id,
     });
-    setCurrentRow(channelSourceInfo);
+    setCurrentRow(channelSourceInfo.data[0]);
   };
 
   /**
@@ -57,6 +57,7 @@ const ChannelList: React.FC = () => {
           defaultMessage: '删除频道成功',
         }),
       );
+      actionRef.current?.reload();
       return true;
     } catch (error) {
       hide();
@@ -72,14 +73,14 @@ const ChannelList: React.FC = () => {
       title: <FormattedMessage id="pages.searchTable.logo" defaultMessage="台标" />,
       search: false,
       hideInForm: true,
-      dataIndex: 'images',
+      dataIndex: 'logo',
       render(dataRow: any) {
-        return <Image width={75} height={30} src={dataRow[0]?.href} />;
+        return <Image width={75} height={30} src={dataRow} />;
       },
     },
     {
       title: <FormattedMessage id="pages.searchTable.channelName" defaultMessage="频道名" />,
-      dataIndex: 'title',
+      dataIndex: 'name',
       render: (dom, entity) => {
         return (
           <a
@@ -218,11 +219,11 @@ const ChannelList: React.FC = () => {
         }}
         closable={false}
       >
-        {currentRow?.title && (
+        {currentRow?.name && (
           <>
             <ProDescriptions<API.User>
               column={2}
-              title={currentRow?.title}
+              title={currentRow?.name}
               request={async () => ({
                 data: currentRow || {},
               })}

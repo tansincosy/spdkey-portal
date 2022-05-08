@@ -110,8 +110,8 @@ declare namespace API {
     id?: string;
     updatedAt?: string;
     createdAt?: string;
-    title?: string;
-    images?: { href?: string; type?: string }[];
+    name?: string;
+    logo?: string;
     country?: string;
     language?: string;
     playUrl?: string;
@@ -120,10 +120,10 @@ declare namespace API {
   type AllowChannelSource = {
     id?: string;
     updatedAt?: string;
-    epgXmlId?: string;
+    ePGUrlId?: string;
     channelId?: string;
     createdAt?: string;
-    title?: string;
+    name?: string;
     images?: { href?: string; type?: string }[];
     country?: string;
     language?: string;

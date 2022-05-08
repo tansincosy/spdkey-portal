@@ -13,7 +13,7 @@ export async function login(
 ): Promise<API.Token> {
   const str: string[] = [];
   body.grant_type = 'password';
-  body.scope = 'sys';
+  body.scope = 'super-admin';
   delete body.autoLogin;
 
   Object.keys(body).forEach((key) => {

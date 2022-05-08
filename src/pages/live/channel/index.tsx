@@ -195,7 +195,7 @@ const ChannelList: React.FC<{
           {},
           {
             params: {
-              title: value,
+              name: value,
             },
           },
         );
@@ -216,7 +216,7 @@ const ChannelList: React.FC<{
           {},
           {
             params: {
-              title: value,
+              name: value,
             },
           },
         );
@@ -281,7 +281,12 @@ const ChannelList: React.FC<{
         visible={createDrawerVisible}
         onVisibleChange={setCreateDrawerVisible}
         onFinish={async (value: API.Channel) => {
-          console.log('channelForm>>>', channelForm.getFieldsValue());
+          console.log(
+            'channelForm>>>',
+            channelForm.getFieldsValue(),
+            'value.playSources',
+            value.playSources,
+          );
           let success;
           if (value.id) {
             console.log('update');
@@ -291,8 +296,7 @@ const ChannelList: React.FC<{
               success = await handleAddChannel({
                 title,
                 programSourceId: value.programSourceId,
-                playSources:
-                  (value.playSources && value.playSources.map((item: any) => item.item)) || [],
+                playSources: value.playSources || [],
               });
             }
           }
@@ -338,7 +342,7 @@ const ChannelList: React.FC<{
             {channelSourceOptions.map((item: API.ChannelSource) => {
               return (
                 <Select.Option key={item.id} value={item.playUrl}>
-                  {item.title}
+                  {item.name}
                 </Select.Option>
               );
             })}
@@ -385,8 +389,8 @@ const ChannelList: React.FC<{
               defaultMessage: '从源中选择节目单',
             })}
             options={channelSourceProgramsOptions.map((item: API.AllowChannelSource) => ({
-              label: item.title,
-              value: `${item.epgXmlId}:${item.channelId}`,
+              label: item.name,
+              value: `${item.ePGUrlId}:${item.channelId}`,
             }))}
           />
         </Form.Item>

@@ -129,6 +129,12 @@ declare namespace API {
     language?: string;
   };
 
+  type PercentData = {
+    data: {
+      percent: number;
+    };
+  };
+
   interface Pagination<T> {
     pageNumber: number;
     pageSize: number;

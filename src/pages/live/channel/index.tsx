@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, Form, Image, message, Select } from 'antd';
 import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
@@ -77,6 +77,8 @@ const ChannelList: React.FC<{
   const [createDrawerVisible, setCreateDrawerVisible] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
   const intl = useIntl();
+
+  useEffect(() => {}, []);
 
   const columns: ProColumns<API.Channel>[] = [
     {

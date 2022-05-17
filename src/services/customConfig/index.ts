@@ -42,7 +42,7 @@ export async function getConfigList(
 }
 
 export async function checkRepeatName(name: string): Promise<{ result: boolean }> {
-  return request('/api/config/repeat-name', {
+  return request('/api/config/duplicated-name', {
     method: 'GET',
     params: {
       name,

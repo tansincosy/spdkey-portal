@@ -82,6 +82,7 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage id="pages.searchTable.updateForm.deviceName" defaultMessage="设备名字" />
       ),
+      ellipsis: true,
       dataIndex: 'name',
       render: (dom, entity) => {
         return (

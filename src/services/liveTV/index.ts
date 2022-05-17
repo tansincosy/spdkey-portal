@@ -113,6 +113,13 @@ export async function beginParseEpgXml(options?: Record<string, any>) {
   });
 }
 
+export async function getDownloadPercent() {
+  return request<API.PercentData>('/api/channel/source/percent', {
+    method: 'GET',
+    params: {},
+  });
+}
+
 export async function getChannelSourcesInfo(params: { id: string }) {
   return request<API.Pagination<API.AllowChannelSource[]>>('/api/channel/source', {
     method: 'GET',

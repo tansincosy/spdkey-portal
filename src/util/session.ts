@@ -20,18 +20,19 @@ class SessionManager {
     } else {
       tobeSessionSavedJson[key] = value;
     }
+    console.log('value', value);
     this.saveStorage();
   }
 
   get<T>(key: string): T | null {
     if (!(key in json)) {
       try {
-        const value = SESSION_STORAGE.getItem(key) || LOCAL_STORAGE.getItem(key);
+        const cacheValue = tobeSessionSavedJson[key] || tobeLocalSavedJson[key];
+        const value = cacheValue || SESSION_STORAGE.getItem(key) || LOCAL_STORAGE.getItem(key);
         if (value) {
           json[key] = JSON.parse(aes.decrypt(value, key).toString(encUTF8));
         }
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.error(`localStorage access denied!`);
         return null;
       }

@@ -18,46 +18,52 @@ import type { RequestOptionsInit, ResponseError } from 'umi-request';
 import UAParser from 'ua-parser-js';
 import { isEmpty } from 'lodash';
 import { message, notification } from 'antd';
+import { v4 } from 'uuid';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
 
 const registerDevice = async () => {
   const uaParser = new UAParser();
-  const {
-    os,
-    browser: { name },
-    engine,
-  } = uaParser.getResult();
-  const deviceId = crypto.randomUUID();
-  const osInfo = `${os.name}_${os.version}`;
-  const engineInfo = `${engine.name}_${engine.version}`;
+  const browser = uaParser.getBrowser();
+  const device = uaParser.getDevice();
+  const engine = uaParser.getEngine();
+  const OS = uaParser.getOS();
+  const deviceId = v4();
+
+  const deviceInfo = {
+    os: `${OS.name} ${OS.version}`,
+    engine: `${engine.name} ${engine.version}`,
+    browser: `${browser.name} ${browser.version}`,
+    type: device.type ?? 'desktop',
+  };
   const { id, deviceSecret } = await addDevice({
     data: {
       deviceId,
-      os: osInfo,
-      engine: engineInfo,
-      platform: osInfo + '_' + engineInfo,
-      name: `${os.name}_${name}_${engine.name}_${crypto.randomUUID()}`,
+      os: `${OS.name} ${OS.version}`,
+      engine: deviceInfo.engine,
+      platform: deviceInfo.browser,
+      type: deviceInfo.type,
+      name: `${deviceInfo.os}_${deviceInfo.type}_${deviceInfo.engine}_${deviceId}`,
     },
   });
-  session.put('device', { id, deviceId, deviceSecret }, true);
+
+  const sessionSave = {
+    id,
+    deviceId,
+    deviceSecret,
+    ...deviceInfo,
+  };
+  session.put('device', sessionSave, true);
 };
 
-const setDeviceState = async () => {
+const updateDeviceState = async () => {
   const deviceInfo = session.get<API.Device>('device');
-  const uaParser = new UAParser();
-  const { os, engine } = uaParser.getResult();
-  const osInfo = `${os.name}_${os.version}`;
-  const engineInfo = `${engine.name}_${engine.version}`;
   if (deviceInfo?.id) {
     await updateDevice({
       data: {
         id: deviceInfo?.id,
         isOnline: 1,
-        os: osInfo,
-        engine: engineInfo,
-        platform: osInfo + '_' + engineInfo,
       },
     }).catch(() => {
       registerDevice();
@@ -81,7 +87,7 @@ export async function getInitialState(): Promise<{
   loading?: boolean;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
-  setDeviceState();
+  updateDeviceState();
   const fetchUserInfo = async () => {
     try {
       const userInfo = await queryCurrentUser();

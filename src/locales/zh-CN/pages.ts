@@ -72,6 +72,7 @@ export default {
   'pages.client.table.id': '设备id',
   'pages.client.table.name': '设备名',
   'pages.client.table.isOnline': '是否在线',
+  'pages.client.table.type': '设备类型',
   'pages.client.table.clientId': '设备id',
   'pages.client.table.secondsTip': '单位：秒',
   'pages.client.table.accessTokenValidateSeconds': '令牌有效时间',

@@ -45,10 +45,7 @@ export async function updateUser(options?: Record<string, any>) {
 }
 
 export async function getUserInfo(params: { id: string }) {
-  return request<API.User>('/api/user', {
+  return request<API.User>(`/api/user/${params.id}`, {
     method: 'GET',
-    params: {
-      ...params,
-    },
   });
 }

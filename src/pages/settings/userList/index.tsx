@@ -7,15 +7,7 @@ import type { ProColumns, ActionType } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import type { ProDescriptionsItemProps } from '@ant-design/pro-descriptions';
 import ProDescriptions from '@ant-design/pro-descriptions';
-import {
-  getUsers,
-  removeUser,
-  getUserInfo,
-  addUser,
-  updateUser,
-  updateDevice,
-  getDevicesByUserId,
-} from '@/services';
+import { getUsers, removeUser, getUserInfo, addUser, updateUser, updateDevice } from '@/services';
 import {
   DrawerForm,
   ProFormDigit,
@@ -91,8 +83,7 @@ const TableList: React.FC = () => {
   const getUserInfoFromService = async (id: string) => {
     setUserClients([]);
     const userInfo = await getUserInfo({ id });
-    const clientList = await getDevicesByUserId({ userId: id });
-    setUserClients(clientList);
+    setUserClients(userInfo.devices || []);
     setCurrentRow(userInfo);
   };
 
@@ -101,18 +92,24 @@ const TableList: React.FC = () => {
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
-  const clientColume: ProColumns<API.Device>[] = [
+  const clientColum: ProColumns<API.Device>[] = [
     {
       title: intl.formatMessage({ id: 'pages.client.table.id' }),
       dataIndex: 'id',
+      hideInTable: true,
     },
     {
       title: intl.formatMessage({ id: 'pages.client.table.name' }),
       dataIndex: 'name',
+      ellipsis: true,
     },
     {
       title: intl.formatMessage({ id: 'pages.client.table.isOnline' }),
       dataIndex: 'isOnline',
+    },
+    {
+      title: intl.formatMessage({ id: 'pages.client.table.type' }),
+      dataIndex: 'type',
     },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
@@ -128,7 +125,7 @@ const TableList: React.FC = () => {
               await updateDevice({
                 data: {
                   ...record,
-                  isOnline: false,
+                  isOnline: 0,
                 },
               });
               message.success('已下线');
@@ -191,7 +188,7 @@ const TableList: React.FC = () => {
       ),
       search: false,
       hideInForm: true,
-      dataIndex: 'clientLimit',
+      dataIndex: 'deviceLimit',
     },
     {
       search: false,
@@ -352,8 +349,7 @@ const TableList: React.FC = () => {
           name="username"
         />
         {!isUpdateForm && (
-          <ProFormText
-            valueType="password"
+          <ProFormText.Password
             label={intl.formatMessage({
               id: 'pages.user.addForm.password',
               defaultMessage: '密码',
@@ -408,7 +404,7 @@ const TableList: React.FC = () => {
           })}
         />
         <ProFormDigit
-          name="clientLimit"
+          name="deviceLimit"
           rules={[
             {
               required: true,
@@ -455,7 +451,7 @@ const TableList: React.FC = () => {
               dataSource={userClients}
               size="small"
               pagination={false}
-              columns={clientColume}
+              columns={clientColum}
             />
           </>
         )}

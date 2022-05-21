@@ -20,7 +20,6 @@ class SessionManager {
     } else {
       tobeSessionSavedJson[key] = value;
     }
-    console.log('value', value);
     this.saveStorage();
   }
 

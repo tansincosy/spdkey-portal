@@ -16,7 +16,7 @@ declare namespace API {
     clientLimit?: number;
     isLocked?: boolean;
     scopes?: string[];
-    clients?: Device[];
+    devices?: Device[];
     updatedAt?: string;
     createdAt?: string;
   };

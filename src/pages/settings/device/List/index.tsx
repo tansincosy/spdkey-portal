@@ -175,6 +175,7 @@ const TableList: React.FC = () => {
       dataIndex: 'createdAt',
       hideInForm: true,
       valueType: 'dateTime',
+      sorter: true,
     },
     {
       search: false,
@@ -182,6 +183,7 @@ const TableList: React.FC = () => {
       dataIndex: 'updatedAt',
       valueType: 'dateTime',
       hideInForm: true,
+      sorter: true,
     },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
@@ -366,7 +368,7 @@ const TableList: React.FC = () => {
         />
       </DrawerForm>
       <Drawer
-        width="30%"
+        width="50%"
         visible={showDetail}
         onClose={() => {
           setCurrentRow(undefined);

@@ -60,14 +60,10 @@ export async function refreshAccessToken(refreshToken: string): Promise<API.Toke
 export async function logout() {
   const device = session.get<API.Device>('device');
   const basicAuth = btoa(`${device?.deviceId}:${device?.deviceSecret}`);
-  const { accessToken } = session.get<API.Token>('token') || {};
   return request('/api/oauth/revoke', {
     method: 'POST',
-    headers: {
-      Authorization: `Basic ${basicAuth}`,
-    },
     data: {
-      accessToken,
+      client: basicAuth,
     },
   });
 }

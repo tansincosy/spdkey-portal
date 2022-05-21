@@ -37,11 +37,8 @@ export async function addDevice(options?: Record<string, API.Device>) {
 }
 
 export async function getDeviceInfo(params: Record<string, any>) {
-  return request<API.Device>('/api/device', {
+  return request<API.Device>(`/api/device/${params.id}`, {
     method: 'GET',
-    params: {
-      ...params,
-    },
   });
 }
 export async function getDevicesByUserId(params: Record<string, any>) {

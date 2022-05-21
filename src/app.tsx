@@ -281,11 +281,11 @@ function checkStatus(response: Response, options: RequestOptionsInit) {
 const responseHandler = async (response: Response, options: RequestOptionsInit) => {
   const res = await response.clone().json();
   switch (res.errorCode) {
-    case 'MOV:101012':
-    case 'MOV:101008':
+    case 'spd:101012':
+    case 'spd:101008':
       return checkStatus(response, options);
-    case 'MOV:101008':
-    case 'MOV:101009':
+    case 'spd:101008':
+    case 'spd:101009':
       session.remove('token');
       history.push(loginPath);
       return response;

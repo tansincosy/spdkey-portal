@@ -170,6 +170,12 @@ const TableList: React.FC = () => {
       dataIndex: 'os',
     },
     {
+      title: <FormattedMessage id="page.config.type" defaultMessage="类别" />,
+      search: false,
+      hideInForm: true,
+      dataIndex: 'type',
+    },
+    {
       search: false,
       title: <FormattedMessage id="pages.searchTable.createdAt" defaultMessage="创建时间" />,
       dataIndex: 'createdAt',

@@ -13,7 +13,7 @@ export async function login(
 ): Promise<API.Token> {
   const str: string[] = [];
   body.grant_type = 'password';
-  body.scope = 'super-admin';
+  body.scope = 'portal';
   delete body.autoLogin;
 
   Object.keys(body).forEach((key) => {
@@ -23,7 +23,7 @@ export async function login(
   //clientId 签发的设备id
   //clientSecret 签发的设备密钥
   const basicAuth = btoa(`${device?.deviceId}:${device?.deviceSecret}`);
-  return request<API.LoginResult>('/api/oauth/token', {
+  return request<API.LoginResult>('/api/oauth2/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
